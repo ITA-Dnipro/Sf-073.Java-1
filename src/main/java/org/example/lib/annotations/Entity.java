@@ -1,6 +1,11 @@
 package org.example.lib.annotations;
 
-// todo: declare properly the annotations
-// 1st part
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD})
 public @interface Entity {
 } //                          (HIGH)
