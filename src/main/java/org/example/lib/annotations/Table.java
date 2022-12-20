@@ -7,5 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface Entity {
-} //                          (HIGH)
+public @interface Table {
+    String value() default "";
+} // (HIGH)
