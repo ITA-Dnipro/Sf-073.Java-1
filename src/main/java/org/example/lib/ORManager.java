@@ -29,12 +29,21 @@ public interface ORManager {
     // read the jdbc url, username and password from
     //  the given property file
     static ORManager withPropertiesFrom(String filename) {
-        return null; // todo
+
+        DataSource dataSource = null;
+        /*dataSource.setDriverClassName(environment.getRequiredProperty("jdbc.driverClassName"));
+        dataSource.setUrl(environment.getRequiredProperty("jdbc.url"));
+        dataSource.setUsername(environment.getRequiredProperty("jdbc.username"));
+        dataSource.setPassword(environment.getRequiredProperty("jdbc.password"));
+        */
+        //withDataSource(DataSourceFactory.getDataSource(property,type))
+
+        return new Hibernate(dataSource);
     }
 
     // initialize connection factory for the DB based on the DataSource
     static ORManager withDataSource(DataSource dataSource) {
-        return null; // todo
+        return new Hibernate(dataSource);
     }
 
     // generate the schema in the DB
