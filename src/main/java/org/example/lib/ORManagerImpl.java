@@ -8,14 +8,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class Hibernate implements ORManager{
+public class ORManagerImpl implements ORManager{
     DataSource dataSource;
 
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
 
-    public Hibernate(DataSource dataSource){
+    public ORManagerImpl(DataSource dataSource){
         this.dataSource = dataSource;
     }
 

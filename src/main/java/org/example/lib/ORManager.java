@@ -36,14 +36,14 @@ public interface ORManager {
         dataSource.setUsername(environment.getRequiredProperty("jdbc.username"));
         dataSource.setPassword(environment.getRequiredProperty("jdbc.password"));
         */
-        //withDataSource(DataSourceFactory.getDataSource(property,type))
-
-        return new Hibernate(dataSource);
+        //
+        return null;
+        //return withDataSource(DataSourceFactory.getDataSource(property,type));
     }
 
     // initialize connection factory for the DB based on the DataSource
     static ORManager withDataSource(DataSource dataSource) {
-        return new Hibernate(dataSource);
+        return new ORManagerImpl(dataSource);
     }
 
     // generate the schema in the DB
