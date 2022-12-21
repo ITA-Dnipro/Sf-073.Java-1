@@ -57,6 +57,7 @@ public interface ORManager {
         return new ORManagerImpl(dataSource);
     }
 
+
     // generate the schema in the DB
     // for given list of entity classes (and all related
     //  by OneToMany/ManyToOne) create a schema in DB
