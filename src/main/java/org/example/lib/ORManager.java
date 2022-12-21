@@ -36,7 +36,7 @@ public interface ORManager {
     //  the given property file
     static ORManager withPropertiesFrom(String filename) {
 
-        Properties prop = new Properties();
+       Properties prop = new Properties();
         try (InputStream input = new FileInputStream(filename)) {
             prop.load(input);
         } catch (IOException e) {
@@ -49,7 +49,6 @@ public interface ORManager {
         datasource.setUser(prop.getProperty("jdbc-username"));
         datasource.setPassword(prop.getProperty("jdbc-password"));
         DBTypes type = DBTypes.valueOf(prop.getProperty("jdbc-typeDB"));
-
         return withDataSource(DataSourceFactory.getDataSource(prop, type));
     }
 

@@ -1,7 +1,9 @@
 package org.example.model;
+import lombok.Data;
 import org.example.lib.annotations.*;
 import java.time.LocalDate;
 
+@Data
 @Entity
 @Table("books")
 public class Book {
@@ -10,6 +12,9 @@ public class Book {
     private String title;
     @Column("published_at")
     private LocalDate publishedAt;
+    // 2nd stage:
+    @ManyToOne(columnName = "publisher_id")
+    private Publisher publisher = null;
 
     public Book() {
     }
@@ -17,37 +22,5 @@ public class Book {
     public Book(String title, LocalDate publishedAt) {
         this.title = title;
         this.publishedAt = publishedAt;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public LocalDate getPublishedAt() {
-        return publishedAt;
-    }
-
-    public void setPublishedAt(LocalDate publishedAt) {
-        this.publishedAt = publishedAt;
-    }
-
-    // 2nd stage:
-    @ManyToOne(columnName = "publisher_id")
-    Publisher publisher = null;
-
-    public Publisher getPublisher() {
-        return publisher;
-    }
-
-    public void setPublisher(Publisher publisher) {
-        this.publisher = publisher;
     }
 }

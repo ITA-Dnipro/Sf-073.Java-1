@@ -1,5 +1,6 @@
 package org.example.lib;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 
 import javax.sql.DataSource;
@@ -20,8 +21,9 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
+@Slf4j
 public class ORManagerImpl implements ORManager {
-    DataSource dataSource;
+    private final DataSource dataSource;
 
     private Connection getConnection() throws SQLException {
         return dataSource.getConnection();
@@ -35,16 +37,13 @@ public class ORManagerImpl implements ORManager {
     public void register(Class... entityClasses) {
         for (Class currClass : entityClasses) {
             if (!currClass.isAnnotationPresent(Entity.class)) continue;
-
-            Class<? extends Object> clss = currClass.getClass();
-            String nameOfTable = clss.getSimpleName();
-
+            String nameOfTable = currClass.getSimpleName();
             if (currClass.isAnnotationPresent(Table.class)) {
                 Table ta = (Table) currClass.getAnnotation(Table.class);
                 nameOfTable = ta.value().isEmpty() ? nameOfTable : ta.value();
             }
 
-            Field[] declaredFields = clss.getDeclaredFields();
+            Field[] declaredFields = currClass.getDeclaredFields();
             String pkeyName = "";
             ArrayList<Field> columns = new ArrayList<>();
             StringJoiner joiner = new StringJoiner(",");
@@ -52,10 +51,18 @@ public class ORManagerImpl implements ORManager {
                 if (field.isAnnotationPresent(Id.class)) {
                     String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
                     pkeyName = field.getName()+" "+typeOfPKEYField+" PRIMARY KEY,";
-                } else if (field.isAnnotationPresent(Column.class)) {
+                } else if (field.isAnnotationPresent(ManyToOne.class)) {
+                    //to do
+                } else if (field.isAnnotationPresent(OneToMany.class)) {
+                    //to do
+                } else {
                     String typeOfField = getTypeOfFieldSQL(field);
-
-                    String str = field.getName() +
+                    String nameOfField = field.getName();
+                    if (field.isAnnotationPresent(Column.class)) {
+                        Column fld = field.getAnnotation(Column.class);
+                        nameOfField = fld.value().isEmpty() ? nameOfField : fld.value();
+                    }
+                    String str = nameOfField +
                             " " + typeOfField;
 
                     joiner.add(str);
@@ -63,17 +70,16 @@ public class ORManagerImpl implements ORManager {
                 }
             }
 
-            String sql = "CREATE TABLE IF NOT EXISTS " + nameOfTable + "\"+\n" +
-                    "            \"(" + pkeyName +"\"+\n" +
-                    "            \"" + joiner + "\"+\n";
+            String sql = "CREATE TABLE IF NOT EXISTS " + nameOfTable +
+                    " (" +pkeyName
+                    +joiner
+                    +")";
 
             try (Connection conn = getConnection();
                  Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate(sql);
             } catch (SQLException se) {
-                //log.warn("An error while init DB"+se.getMessage());
-                //Handle errors for JDBC
-                se.printStackTrace();
+                log.warn("An error while init DB"+se.getMessage());
             }
         }
     }
@@ -81,13 +87,9 @@ public class ORManagerImpl implements ORManager {
     private String getTypeOfPrimaryKeyFieldSQL(Field field) {
         String typeSQL = getTypeOfFieldSQL(field);
         if (typeSQL.equals("INTEGER")) {
-            IDType currType = null;
-            try {
-                var method = Id.class.getDeclaredMethod("value");
-                currType = (IDType) method.invoke(null);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
+            Id fld = field.getAnnotation(Id.class);
+            IDType currType = fld.value();
+
             if (field.isAnnotationPresent(Id.class)) {
                 Id annFieldType = field.getAnnotation(Id.class);
                 currType = annFieldType.value();
@@ -107,9 +109,10 @@ public class ORManagerImpl implements ORManager {
             try {
                 var method = Enumerated.class.getDeclaredMethod("value");
                 currType = (EnumType) method.invoke(null);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace();
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException se) {
+                log.warn("An error while get type of field "+field.getName()+":"+se.getMessage());
             }
+
             if (field.isAnnotationPresent(Enumerated.class)) {
                 Enumerated annFieldType = field.getAnnotation(Enumerated.class);
                 currType = annFieldType.value();
@@ -117,6 +120,7 @@ public class ORManagerImpl implements ORManager {
             if (currType == EnumType.STRING) {
                 return "VARCHAR(255)";
             }
+
             return "INTEGER";
         } else if (type == int.class) {
             return "INTEGER";
