@@ -8,4 +8,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface Id {
+    IDType value() default IDType.SERIAL;
+
+    enum IDType {
+        SERIAL,
+        UUID
+    }
+
 } //                              (HIGH)
