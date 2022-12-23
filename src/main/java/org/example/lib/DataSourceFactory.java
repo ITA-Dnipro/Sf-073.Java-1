@@ -3,33 +3,49 @@ package org.example.lib;
 import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
-import java.util.Properties;
+
 
 public class DataSourceFactory {
-        private static DataSource getH2DataSource(Properties props) {
-            DataSource dataSource = new JdbcDataSource();
-           // dataSource.setURL(props.getProperty("MYSQL_DB_URL"));
-           // dataSource.setUser(props.getProperty("MYSQL_DB_USERNAME"));
-           // dataSource.setPassword(props.getProperty("MYSQL_DB_PASSWORD"));
+    public static DataSource getH2DataSource() {
 
-            return dataSource;
+        JdbcDataSource dataSource = new JdbcDataSource();
+
+        dataSource.setURL("jdbc:h2:file:./ormdb");
+        dataSource.setUser("");
+        dataSource.setPassword("");
+
+        return dataSource;
+    }
+
+    /*
+    private static DataSource getPostgreDataSource(Properties props) {
+
+        Properties res = new Properties();
+
+        Path path1 = Path.of("postgre.properties");
+        try {
+            InputStream is = DataSourceFactory.class.getClassLoader()
+                    .getResourceAsStream(path1.toString());
+            res.load(is);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
-        private static DataSource getPostgreDataSource(Properties props){
-            DataSource dataSource = new JdbcDataSource();
-            // dataSource.setURL(props.getProperty("MYSQL_DB_URL"));
-            // dataSource.setUser(props.getProperty("MYSQL_DB_USERNAME"));
-            // dataSource.setPassword(props.getProperty("MYSQL_DB_PASSWORD"));
+        JdbcDataSource dataSource = new JdbcDataSource();
 
-            return dataSource;
-        }
+        dataSource.setURL(res.getProperty(""));
+        dataSource.setUser(res.getProperty(""));
+        dataSource.setPassword(res.getProperty(""));
 
-        public static DataSource getDataSource(Properties props,DBTypes type){
-            if (type==DBTypes.H2) return getH2DataSource(props);
-            if (type==DBTypes.POSTGRE) return getPostgreDataSource(props);
-            //to do
-            //Make exception unknown type DB
-            return null;
-        };
+        return dataSource;
+    }
 
+    public static DataSource getDataSource(Properties props, DBTypes type) {
+        if (type == DBTypes.H2) return getH2DataSource(props);
+        if (type == DBTypes.POSTGRE) return getPostgreDataSource(props);
+        //to do
+        //Make exception unknown type DB
+        return null;
+    }
+ */
 }
