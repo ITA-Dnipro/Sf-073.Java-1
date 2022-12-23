@@ -23,6 +23,11 @@ public class ORManagerImpl implements ORManager {
     }
 
     @Override
+    public boolean checkConnectionToDB() {
+        return repository.checkConnection();
+    }
+
+    @Override
     public void register(Class... entityClasses) {
         for (Class currClass : entityClasses) {
             if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)) continue;
