@@ -1,5 +1,6 @@
 package org.example.lib;
 
+import org.example.lib.utils.Utils;
 import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
@@ -29,7 +30,7 @@ public interface ORManager {
     // - LocalDateTime/Instant            (MEDIUM)
     // - BigDecimal                       (OPTIONAL)
     // - Enum +                           (OPTIONAL)
-    //   @Enumerated(EnumType.ORDINAL/EnumType.STRING)
+    //   @Enumerated(Enumerated.EnumType.ORDINAL/Enumerated.EnumType.STRING)
 
     // initialize connection factory for the DB
     // read the jdbc url, username and password from
@@ -54,7 +55,7 @@ public interface ORManager {
 
     // initialize connection factory for the DB based on the DataSource
     static ORManager withDataSource(DataSource dataSource) {
-        return new ORManagerImpl(dataSource);
+        return Utils.getORMImplementation(dataSource);
     }
 
 

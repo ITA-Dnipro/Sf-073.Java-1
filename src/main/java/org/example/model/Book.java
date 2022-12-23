@@ -13,8 +13,8 @@ public class Book {
     @Column("published_at")
     private LocalDate publishedAt;
     // 2nd stage:
-    //@ManyToOne(columnName = "publisher_id")
-    //private Publisher publisher = null;
+    @ManyToOne(columnName = "publisher_id")
+    private Publisher publisher = null;
 
     public Book() {
     }
