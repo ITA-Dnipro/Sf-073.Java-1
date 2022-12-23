@@ -19,12 +19,24 @@ public class SQLUtils {
     private SQLUtils() {
     }
 
-    public static String getSQLTestForIdField(Field field) {
+    public static String getSQLStringForField(Field field) {
+        String nameOfField = AnnotationsUtils.getNameOfColumn(field);
+        String typeOfField = SQLUtils.getTypeOfFieldSQL(field);
+
+        if (typeOfField == null) {
+            return nameOfField;
+        }
+
+        return nameOfField +
+                " " + typeOfField;
+    }
+    
+    public static String getSQLStringForIdField(Field field) {
         String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
         return field.getName() + " " + typeOfPKEYField + " PRIMARY KEY,";
     }
 
-    public static String getTypeOfFieldSQL(Field field) {
+    private static String getTypeOfFieldSQL(Field field) {
         var type = field.getType();
         String typeSQL;
         if (type == Enum.class) {
@@ -75,7 +87,7 @@ public class SQLUtils {
         return mapOfTypes;
     }
 
-    public static String getTypeOfPrimaryKeyFieldSQL(Field field) {
+    private static String getTypeOfPrimaryKeyFieldSQL(Field field) {
         String typeSQL = getTypeOfFieldSQL(field);
 
         if (typeSQL == null) {
@@ -91,15 +103,5 @@ public class SQLUtils {
         return typeSQL;
     }
 
-    public static String getSQLTestForField(Field field) {
-        String nameOfField = AnnotationsUtils.getNameOfColumn(field);
-        String typeOfField = SQLUtils.getTypeOfFieldSQL(field);
-
-        if (typeOfField == null) {
-            return nameOfField;
-        }
-
-        return nameOfField +
-                " " + typeOfField;
-    }
+ 
 }

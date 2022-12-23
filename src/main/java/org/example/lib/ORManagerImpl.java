@@ -31,7 +31,7 @@ public class ORManagerImpl implements ORManager {
             StringJoiner joiner = new StringJoiner(",");
             for (Field field : declaredFields) {
                 if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
-                    var currType = SQLUtils.getSQLTestForIdField(field);
+                    var currType = SQLUtils.getSQLStringForIdField(field);
                     if (currType.isEmpty()) continue;
                     joiner.add(currType);
                 } else if (field.isAnnotationPresent(ManyToOne.class)) {
@@ -39,7 +39,7 @@ public class ORManagerImpl implements ORManager {
                 } else if (field.isAnnotationPresent(OneToMany.class)) {
                     //to do
                 } else {
-                    var currType = SQLUtils.getSQLTestForField(field);
+                    var currType = SQLUtils.getSQLStringForField(field);
                     if (currType.isEmpty()) continue;
                     joiner.add(currType);
                 }
