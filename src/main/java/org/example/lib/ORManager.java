@@ -56,6 +56,7 @@ public interface ORManager {
 
     // initialize connection factory for the DB based on the DataSource
     static ORManager withDataSource(DataSource dataSource) {
+
         return Utils.getORMImplementation(dataSource);
     }
 

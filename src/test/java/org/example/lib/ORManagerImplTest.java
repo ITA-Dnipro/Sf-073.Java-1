@@ -1,6 +1,7 @@
-package test;
+package org.example.lib;
 
 import org.example.lib.ORManager;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -24,5 +25,27 @@ class ORManagerImplTest {
 //
 //        // close the connection
 //        conn.close();
+
+    }
+
+    @Test
+    void given_Datasource_when_geH2DataSource_then_can_connect() throws Exception {
+
+        JdbcDataSource dataSource = new JdbcDataSource();
+
+        dataSource.setURL("jdbc:h2:file:./ormdb");
+        dataSource.setUser("");
+        dataSource.setPassword("");
+
+        ORManager.withDataSource(dataSource);
+
+        //Connection connection = ds.getConnection();
+
+        //assertTrue(connection.isValid(1000));
+    }
+
+    @Test
+    void updateConnection() {
+
     }
 }
