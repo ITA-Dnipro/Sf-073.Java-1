@@ -2,13 +2,16 @@ package org.example.lib;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
+import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.Repository;
 import org.example.lib.utils.SQLUtils;
+import org.example.lib.utils.Utils;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -58,7 +61,27 @@ public class ORManagerImpl implements ORManager {
     }
 
     @Override
-    public void persist(Object o) {
+    public void persist(Object o) throws ObjectAlreadyExistException {
+        if (Utils.checkIfObjectInDB(o)
+        && !SQLUtils.getTypeOfIDField(o).contains("VARCHAR") ){
+            throw new ObjectAlreadyExistException("Object already exist in database!");
+            }
+        var currClass = o.getClass();
+        String nameOfTable = AnnotationsUtils.getNameOfTable(currClass);
+        Field[] declaredFields = currClass.getDeclaredFields();
+        StringJoiner joinerFields = new StringJoiner(",");
+        StringJoiner joinerDataFields = new StringJoiner(",");
+        var arrayOfFields = new ArrayList<>(declaredFields.length);
+        for (Field field : declaredFields) {
+            joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
+            joinerDataFields.add("?");
+            arrayOfFields.add(SQLUtils.getDataObjectFieldInSQLType(o,field));
+        }
+
+        String sql = "INSERT INTO " + nameOfTable+" ("+joinerFields+")" +
+                " VALUES (" + joinerDataFields + ")";
+
+        repository.update(sql,arrayOfFields);
 
     }
 

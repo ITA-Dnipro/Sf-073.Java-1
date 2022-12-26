@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 @Slf4j
 public class Repository {
@@ -19,15 +21,35 @@ public class Repository {
         return dataSource.getConnection();
     }
 
-    public int update(String sql) {
+    public boolean update(String sql, List<Object> params) {
         try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             log.info(sql);
-            return stmt.executeUpdate(sql);
+            int index = 1;
+            for (Object param : params) {
+                if (param == null){
+                    pstmt.setNull(index++,0);
+                }else{
+                    pstmt.setObject(index++, param, SQLUtils.getSQLType(param.getClass()));
+                }
+            }
+            return pstmt.executeUpdate(sql) > 0;
         } catch (SQLException se) {
             //Handle errors for JDBC
             log.error("An error while update DB "+se.getMessage());
         }
-        return 0;
+        return false;
+    }
+
+    public boolean update(String sql) {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            log.info(sql);
+            return stmt.executeUpdate(sql) > 0;
+        } catch (SQLException se) {
+            //Handle errors for JDBC
+            log.error("An error while update DB "+se.getMessage());
+        }
+        return false;
     }
 }

@@ -37,11 +37,9 @@ class ORManagerImplTest {
         dataSource.setUser("");
         dataSource.setPassword("");
 
-        ORManager.withDataSource(dataSource);
+        var status = ORManager.withDataSource(dataSource).checkConnectionToDB();
 
-        //Connection connection = ds.getConnection();
-
-        //assertTrue(connection.isValid(1000));
+        assertTrue(status);
     }
 
     @Test
