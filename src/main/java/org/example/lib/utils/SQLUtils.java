@@ -37,10 +37,10 @@ public class SQLUtils {
         return nameOfField +
                 " " + typeOfField;
     }
-    
+
     public static String getSQLStringForIdField(Field field) {
         String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
-        return field.getName() + " " + typeOfPKEYField + " PRIMARY KEY,";
+        return field.getName() + " " + typeOfPKEYField + " PRIMARY KEY";
     }
 
     private static String getTypeOfFieldSQL(Field field) {
@@ -65,11 +65,11 @@ public class SQLUtils {
     private static Integer getJDBCTypeNumber(Class<?> type) {
         var mapOfTypes = getMapTypesForSQL();
         var currNumberOfType = mapOfTypes.get(type);
-        return currNumberOfType==null?0:currNumberOfType;
+        return currNumberOfType == null ? 0 : currNumberOfType;
     }
 
     public static String getTypeOfIDField(Object o) {
-        var field = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
+        var field = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
         if (field == null) return "";
 
         String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
@@ -90,26 +90,26 @@ public class SQLUtils {
             currType = annFieldType.value();
         }
         if (currType == Enumerated.EnumType.STRING) {
-            return "VARCHAR(255)";
+            return getNameJdbcTypeById(Types.NVARCHAR);
         }
-        return "INTEGER";
+        return getNameJdbcTypeById(Types.INTEGER);
     }
 
     private static Map<Class<?>, Integer> getMapTypesForSQL() {
         Map<Class<?>, Integer> mapOfTypes = new HashMap<>();
 
         mapOfTypes.put(int.class, Types.INTEGER);
-        mapOfTypes.put(Integer.class,Types.INTEGER);
-        mapOfTypes.put(long.class,Types.BIGINT);
-        mapOfTypes.put(Long.class,Types.BIGINT);
-        mapOfTypes.put(double.class,Types.DOUBLE);
+        mapOfTypes.put(Integer.class, Types.INTEGER);
+        mapOfTypes.put(long.class, Types.BIGINT);
+        mapOfTypes.put(Long.class, Types.BIGINT);
+        mapOfTypes.put(double.class, Types.DOUBLE);
         mapOfTypes.put(Double.class, Types.DOUBLE);
         mapOfTypes.put(boolean.class, Types.BIT);
         mapOfTypes.put(Boolean.class, Types.BIT);
         mapOfTypes.put(LocalDate.class, Types.DATE);
-        mapOfTypes.put(LocalTime.class,  Types.TIME);
-        mapOfTypes.put(LocalDateTime.class,  Types.DATE);
-        mapOfTypes.put(Instant.class,  Types.TIMESTAMP);
+        mapOfTypes.put(LocalTime.class, Types.TIME);
+        mapOfTypes.put(LocalDateTime.class, Types.DATE);
+        mapOfTypes.put(Instant.class, Types.TIMESTAMP);
         mapOfTypes.put(BigDecimal.class, Types.NUMERIC);
         mapOfTypes.put(String.class, Types.NVARCHAR);
 
@@ -127,7 +127,7 @@ public class SQLUtils {
 
         for (Field field : Types.class.getFields()) {
             try {
-                result.put((Integer)field.get(null), field.getName());
+                result.put((Integer) field.get(null), field.getName());
             } catch (IllegalAccessException e) {
                 log.error("An error while get type from JDBC types " + field.getName() + ":" + e.getMessage());
             }
@@ -138,20 +138,21 @@ public class SQLUtils {
 
     private static String getNameJdbcTypeById(int id) {
 
-        var mapOfTypes  = getAllJdbcTypeNames();
+        var mapOfTypes = getAllJdbcTypeNames();
         var currType = mapOfTypes.get(id);
 
-        return currType==null?"":currType;
+        return currType == null ? "" : currType;
     }
 
     private static String getTypeOfPrimaryKeyFieldSQL(Field field) {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
-        String typeSQL = "";
-        if (intTypeSQL.equals(Types.INTEGER)) {
+        String typeSQL = getNameJdbcTypeById(intTypeSQL);
+        if (intTypeSQL.equals(Types.INTEGER)
+                || intTypeSQL.equals(Types.BIGINT)) {
             var currType = AnnotationsUtils.getIdType(field);
             if (currType == Id.IDType.SERIAL) {
-                typeSQL = "SERIAL";
+                typeSQL = typeSQL + " AUTO_INCREMENT";
             } else typeSQL = getNameJdbcTypeById(Types.BINARY);
         }
         return typeSQL;
@@ -159,16 +160,16 @@ public class SQLUtils {
 
 
     public static Object getDataObjectFieldInSQLType(Object o, Field field) {
-        var currData = Utils.getValueOfFieldForObject(o,field);
+        var currData = Utils.getValueOfFieldForObject(o, field);
         var type = field.getType();
         if (currData == null) return null;
 
-        if (type == LocalDate.class){
+        if (type == LocalDate.class) {
             return Date.valueOf((LocalDate) currData);
         } else if (type == Instant.class) {
             return Timestamp.from((Instant) currData);
         } else if (type == LocalDateTime.class) {
-           return convertLocalDateTimeToSQLDate((LocalDateTime) currData);
+            return convertLocalDateTimeToSQLDate((LocalDateTime) currData);
         } else if (type == LocalTime.class) {
             return Time.valueOf((LocalTime) currData);
         }
