@@ -16,7 +16,11 @@ import java.util.stream.Stream;
 
 @Slf4j
 public class ORManagerImpl implements ORManager {
-   private final Repository repository;
+    public Repository getRepository() {
+        return repository;
+    }
+
+    private final Repository repository;
 
     public ORManagerImpl(DataSource dataSource) {
         this.repository = new Repository(dataSource);

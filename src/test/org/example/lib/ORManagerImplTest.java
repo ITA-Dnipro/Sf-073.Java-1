@@ -37,7 +37,8 @@ class ORManagerImplTest {
         dataSource.setUser("");
         dataSource.setPassword("");
 
-        ORManager.withDataSource(dataSource);
+        ORManager orm = ORManager.withDataSource(dataSource);
+
 
         //Connection connection = ds.getConnection();
 
