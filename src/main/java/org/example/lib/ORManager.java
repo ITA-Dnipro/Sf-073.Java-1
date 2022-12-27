@@ -60,6 +60,7 @@ public interface ORManager {
         return Utils.getORMImplementation(dataSource);
     }
 
+    boolean checkConnectionToDB();
 
     // generate the schema in the DB
     // for given list of entity classes (and all related

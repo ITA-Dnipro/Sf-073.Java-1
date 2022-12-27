@@ -30,4 +30,14 @@ public class Repository {
         }
         return 0;
     }
+
+    public boolean checkConnection() {
+        try (Connection conn = getConnection()) {
+            return conn.isValid(3);
+        } catch (SQLException se) {
+            //Handle errors for JDBC
+            log.error("An error while connection to DB "+se.getMessage());
+        }
+        return false;
+    }
 }
