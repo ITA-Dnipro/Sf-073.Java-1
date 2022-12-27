@@ -12,14 +12,14 @@ class Main {
         );
         ormManager.register(Book.class, Publisher.class);
 
-        //var publisher = new Publisher("MyPub");
-        //ormManager.persist(publisher);
+        var publisher = new Publisher("MyPub");
+        ormManager.persist(publisher);
 
         var book1 = new Book("Solaris", LocalDate.of(1961, 1, 1));
         ormManager.persist(book1);
 
-        //book1.setPublisher(publisher);
-        //ormManager.merge(book1);
+        book1.setPublisher(publisher);
+        ormManager.merge(book1);
 
         // ...
     }
