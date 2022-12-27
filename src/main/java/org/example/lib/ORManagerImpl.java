@@ -3,8 +3,8 @@ package org.example.lib;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
+import org.example.lib.service.Repository;
 import org.example.lib.utils.AnnotationsUtils;
-import org.example.lib.utils.Repository;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
 
@@ -38,19 +38,18 @@ public class ORManagerImpl implements ORManager {
             Field[] declaredFields = currClass.getDeclaredFields();
             StringJoiner joiner = new StringJoiner(",");
             for (Field field : declaredFields) {
+                String currType="";
                 if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
-                    var currType = SQLUtils.getSQLStringForIdField(field);
-                    if (currType.isEmpty()) continue;
-                    joiner.add(currType);
+                    currType = SQLUtils.getSQLStringForIdField(field);
                 } else if (field.isAnnotationPresent(ManyToOne.class)) {
                     //to do
                 } else if (field.isAnnotationPresent(OneToMany.class)) {
                     //to do
                 } else {
-                    var currType = SQLUtils.getSQLStringForField(field);
-                    if (currType.isEmpty()) continue;
-                    joiner.add(currType);
+                    currType = SQLUtils.getSQLStringForField(field);
                 }
+                if (currType.isEmpty()) continue;
+                joiner.add(currType);
             }
 
             String sql = "CREATE TABLE IF NOT EXISTS " + nameOfTable +
@@ -78,6 +77,12 @@ public class ORManagerImpl implements ORManager {
         StringJoiner joinerDataFields = new StringJoiner(",");
         var arrayOfFields = new ArrayList<>(declaredFields.length);
         for (Field field : declaredFields) {
+            if (field.isAnnotationPresent(ManyToOne.class) || field.isAnnotationPresent(OneToMany.class)) {
+                continue;//to do
+            }
+            var currData = Utils.getValueOfFieldForObject(o,field);
+            if (currData == null) continue;
+
             joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
             joinerDataFields.add("?");
             arrayOfFields.add(SQLUtils.getDataObjectFieldInSQLType(o,field));
@@ -85,7 +90,6 @@ public class ORManagerImpl implements ORManager {
 
         String sql = "INSERT INTO " + nameOfTable+" ("+joinerFields+")" +
                 " VALUES (" + joinerDataFields + ")";
-
         repository.update(sql,arrayOfFields);
 
     }

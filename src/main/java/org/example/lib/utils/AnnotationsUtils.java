@@ -23,9 +23,9 @@ public class AnnotationsUtils {
         String nameOfColumn = field.getName();
         if (isAnnotationPresent(field, Column.class)) {
             var annFieldType = field.getAnnotation(Column.class);
-            nameOfColumn = annFieldType.value().isEmpty() ? nameOfColumn : annFieldType.value();
+            return annFieldType.value().isEmpty() ? nameOfColumn : annFieldType.value();
         }
-        return nameOfColumn;
+        return  nameOfColumn;
     }
 
     public static Id.IDType getIdType(Field field){

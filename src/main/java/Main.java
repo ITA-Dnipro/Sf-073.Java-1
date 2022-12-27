@@ -6,7 +6,7 @@ import java.time.LocalDate;
 // 1st part
 class Main {
     public static void main(String[] args) {
-        String propertiesFilename = "";
+        String propertiesFilename = "src/main/resources/db.properties";
         ORManager ormManager = ORManager.withPropertiesFrom(
                 propertiesFilename
         );
