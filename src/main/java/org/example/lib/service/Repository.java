@@ -25,12 +25,36 @@ public class Repository {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             log.info(sql);
             setParametersForPrepareStatement(pstmt, params);
-            return pstmt.executeUpdate() > 0;
+            return pstmt.executeUpdate()>0;
         } catch (SQLException se) {
             //Handle errors for JDBC
-            log.error("An error while update DB " + se.getMessage());
+            log.error("An error while update object DB " + se.getMessage());
         }
         return false;
+    }
+
+    public <T> T updateAndGetObjectWithID(String sql, List<Object> params,Mapper<T> mapper) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS)) {
+            log.info(sql);
+            setParametersForPrepareStatement(pstmt, params);
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Updating object failed, no rows affected.");
+            }
+            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return mapper.mapID(generatedKeys);
+                }
+                else {
+                    throw new SQLException("Updating object failed, no ID obtained.");
+                }
+            }
+        } catch (SQLException se) {
+            //Handle errors for JDBC
+            log.error("An error while update and get ID for object DB " + se.getMessage());
+        }
+        return null;
     }
 
     public boolean update(String sql) {

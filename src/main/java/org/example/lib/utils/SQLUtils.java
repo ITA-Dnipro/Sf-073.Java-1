@@ -144,6 +144,21 @@ public class SQLUtils {
         return currType == null ? "" : currType;
     }
 
+    public static boolean idFieldIsAutoIncrementOnDBSide(Field field) {
+        var type = field.getType();
+        Integer intTypeSQL = getJDBCTypeNumber(type);
+        String typeSQL = getNameJdbcTypeById(intTypeSQL);
+        if (intTypeSQL.equals(Types.INTEGER)
+                || intTypeSQL.equals(Types.BIGINT)) {
+            var currType = AnnotationsUtils.getIdType(field);
+            if (currType == Id.IDType.SERIAL) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     private static String getTypeOfPrimaryKeyFieldSQL(Field field) {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
@@ -192,4 +207,7 @@ public class SQLUtils {
         return new java.sql.Date(utilDate.getTime());
     }
 
+    public static boolean objectHasAutoIncrementID(Object o) {
+
+    }
 }

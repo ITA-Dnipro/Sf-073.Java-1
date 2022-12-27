@@ -3,10 +3,13 @@ package org.example.lib;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
+import org.example.lib.service.Mapper;
 import org.example.lib.service.Repository;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
+import org.example.mapper.BookMapper;
+import org.example.model.Book;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -56,7 +59,11 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public <T> T save(T o) {
-        return null;
+        if (Utils.checkIfObjectInDB(o)){
+            return merge(o);
+        }
+        persist(o);
+        return o;
     }
 
     @Override
@@ -72,7 +79,8 @@ public class ORManagerImpl implements ORManager {
         StringJoiner joinerDataFields = new StringJoiner(",");
         var arrayOfFields = new ArrayList<>(declaredFields.length);
         for (Field field : declaredFields) {
-            if (field.isAnnotationPresent(ManyToOne.class) || field.isAnnotationPresent(OneToMany.class)) {
+            if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)
+                    || AnnotationsUtils.isAnnotationPresent(field,OneToMany.class)) {
                 continue;//to do
             }
             var currData = Utils.getValueOfFieldForObject(o,field);
@@ -85,8 +93,33 @@ public class ORManagerImpl implements ORManager {
 
         String sql = "INSERT INTO " + nameOfTable+" ("+joinerFields+")" +
                 " VALUES (" + joinerDataFields + ")";
-        repository.update(sql,arrayOfFields);
 
+        updateObjectInDatabase(sql,arrayOfFields,o);
+    }
+
+    private void updateObjectInDatabase(String sql,List<Object> arrayOfFields, Object o){
+        var currClass = o.getClass();
+        Field[] declaredFields = currClass.getDeclaredFields();
+        Field idField = null;
+        for (Field field : declaredFields) {
+            if (AnnotationsUtils.isAnnotationPresent(field,Id.class)) {
+                idField = field;
+            }
+        }
+
+      //  if(SQLUtils.objectHasAutoIncrementID(o)) {
+//            var mapper = Utils.getMapperForObject(o);
+//            if (mapper == null) {
+//                return;
+//            }
+//            var objectWithId = repository.updateAndGetObjectWithID(sql, arrayOfFields,new BookMapper());
+//            if (idField != null){
+//                Utils.copyValueOfFieldForObject(o,objectWithId,idField);
+//            }
+//        }else {
+//            Utils.setValueOfFieldForObject(o,idField,newID);
+//            repository.update(sql, arrayOfFields);
+//        }
     }
 
     @Override

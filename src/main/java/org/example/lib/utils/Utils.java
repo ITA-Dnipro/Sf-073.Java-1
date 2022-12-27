@@ -3,6 +3,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
+import org.example.lib.service.Mapper;
+import org.example.mapper.BookMapper;
+import org.example.model.Book;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
@@ -44,6 +47,15 @@ public class Utils {
 
         var primaryKey = getValueOfFieldForObject(o,field);
         return primaryKey != null;
+    }
+
+    public static <T> Mapper<T>  getMapperForObject(Object o){
+        var cls = o.getClass();
+        if (cls == Book.class) {
+            return new BookMapper();
+        }
+        log.error("An error while getting mapper for object "+cls.getSimpleName());
+        return null;
     }
 
 }
