@@ -29,4 +29,9 @@ class AnnotationsUtilsTest {
     @Test
     void getEnumType() {
     }
+
+    @Test
+    void getFieldByAnnotation() {
+    }
+
 }

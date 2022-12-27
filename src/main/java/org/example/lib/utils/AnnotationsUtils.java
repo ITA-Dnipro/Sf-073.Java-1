@@ -47,4 +47,14 @@ public class AnnotationsUtils {
         return fld.value();
     }
 
+    public static Field getFieldByAnnotation(Object o,Class<? extends Annotation> AnnotationClass) {
+        var currClass = o.getClass();
+        Field[] declaredFields = currClass.getDeclaredFields();
+        for (Field field : declaredFields) {
+            if (AnnotationsUtils.isAnnotationPresent(field,AnnotationClass)) {
+                return field;
+            }
+        }
+        return null;
+    }
 }

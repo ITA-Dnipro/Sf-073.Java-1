@@ -24,4 +24,5 @@ public class Book {
         this.title = title;
         this.publishedAt = publishedAt;
     }
+
 }
