@@ -193,7 +193,7 @@ public class SQLUtils {
 
     private static java.sql.Date convertLocalDateTimeToSQLDate(LocalDateTime dateValue) {
         // convert from LocalDateTime to java.sql.date while retaining
-        // the time part without havng to make assumptions about the time-zone
+        // the time part without having to make assumptions about the time-zone
         // by using java.util.Date as an intermediary
         java.util.Date utilDate;
         String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
@@ -208,6 +208,11 @@ public class SQLUtils {
     }
 
     public static boolean objectHasAutoIncrementID(Object o) {
+        //to do
+        return true;
+    }
 
+    public static Object generateIdForObject(Object o) {
+        return null; //to do
     }
 }

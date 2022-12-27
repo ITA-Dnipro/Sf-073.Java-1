@@ -4,8 +4,9 @@ import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
 import org.example.lib.service.Mapper;
-import org.example.mapper.BookMapper;
+import org.example.lib.service.MapperType;
 import org.example.model.Book;
+import org.example.model.Publisher;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
@@ -52,10 +53,16 @@ public class Utils {
     public static <T> Mapper<T>  getMapperForObject(Object o){
         var cls = o.getClass();
         if (cls == Book.class) {
-            return new BookMapper();
+            return MapperType.BOOK.make();
         }
-        log.error("An error while getting mapper for object "+cls.getSimpleName());
+        if (cls == Publisher.class) {
+            return MapperType.PUBLISHER.make();
+        }
+        log.error("An error while getting mapper for object " + cls.getSimpleName());
         return null;
     }
 
+    public static void copyValueOfFieldForObject(Object o, Object objectWithId, Field idField) {
+        //to do
+    }
 }

@@ -3,13 +3,10 @@ package org.example.lib;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
-import org.example.lib.service.Mapper;
 import org.example.lib.service.Repository;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
-import org.example.mapper.BookMapper;
-import org.example.model.Book;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -78,13 +75,20 @@ public class ORManagerImpl implements ORManager {
         StringJoiner joinerFields = new StringJoiner(",");
         StringJoiner joinerDataFields = new StringJoiner(",");
         var arrayOfFields = new ArrayList<>(declaredFields.length);
+        var objectHasAutoIncrementID = SQLUtils.objectHasAutoIncrementID(o);
         for (Field field : declaredFields) {
             if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)
                     || AnnotationsUtils.isAnnotationPresent(field,OneToMany.class)) {
                 continue;//to do
             }
             var currData = Utils.getValueOfFieldForObject(o,field);
-            if (currData == null) continue;
+
+            if(!objectHasAutoIncrementID &&
+                    AnnotationsUtils.isAnnotationPresent(field,Id.class)){
+                 currData = SQLUtils.generateIdForObject(o);
+            }
+            if (currData == null && !(objectHasAutoIncrementID &&
+                    AnnotationsUtils.isAnnotationPresent(field,Id.class))) continue;
 
             joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
             joinerDataFields.add("?");
@@ -93,11 +97,14 @@ public class ORManagerImpl implements ORManager {
 
         String sql = "INSERT INTO " + nameOfTable+" ("+joinerFields+")" +
                 " VALUES (" + joinerDataFields + ")";
-
-        updateObjectInDatabase(sql,arrayOfFields,o);
+        if(objectHasAutoIncrementID) {
+            updateObjectWithAutoIncrementInDatabase(sql, arrayOfFields, o);
+        } else {
+            repository.update(sql, arrayOfFields);
+        }
     }
 
-    private void updateObjectInDatabase(String sql,List<Object> arrayOfFields, Object o){
+    private void updateObjectWithAutoIncrementInDatabase(String sql,List<Object> arrayOfFields, Object o){
         var currClass = o.getClass();
         Field[] declaredFields = currClass.getDeclaredFields();
         Field idField = null;
@@ -107,19 +114,16 @@ public class ORManagerImpl implements ORManager {
             }
         }
 
-      //  if(SQLUtils.objectHasAutoIncrementID(o)) {
-//            var mapper = Utils.getMapperForObject(o);
-//            if (mapper == null) {
-//                return;
-//            }
-//            var objectWithId = repository.updateAndGetObjectWithID(sql, arrayOfFields,new BookMapper());
-//            if (idField != null){
-//                Utils.copyValueOfFieldForObject(o,objectWithId,idField);
-//            }
-//        }else {
-//            Utils.setValueOfFieldForObject(o,idField,newID);
-//            repository.update(sql, arrayOfFields);
-//        }
+        if(idField != null && SQLUtils.objectHasAutoIncrementID(o)) {
+            var mapper = Utils.getMapperForObject(o);
+            if (mapper == null) {
+                return;
+            }
+            var objectWithId = repository.updateAndGetObjectWithID(sql, arrayOfFields,mapper);
+            Utils.copyValueOfFieldForObject(o,objectWithId,idField);
+        }else {
+            repository.update(sql, arrayOfFields);
+        }
     }
 
     @Override
