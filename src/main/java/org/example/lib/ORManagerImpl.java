@@ -11,10 +11,7 @@ import org.example.lib.utils.Utils;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -28,29 +25,12 @@ public class ORManagerImpl implements ORManager {
     @Override
     public void register(Class... entityClasses) {
         for (Class currClass : entityClasses) {
-            if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)) continue;
-            String nameOfTable = AnnotationsUtils.getNameOfTable(currClass);
-            Field[] declaredFields = currClass.getDeclaredFields();
-            StringJoiner joiner = new StringJoiner(",");
-            for (Field field : declaredFields) {
-                String currType="";
-                if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
-                    currType = SQLUtils.getSQLStringForIdField(field);
-                } else if (field.isAnnotationPresent(ManyToOne.class)) {
-                    //to do
-                } else if (field.isAnnotationPresent(OneToMany.class)) {
-                    //to do
-                } else {
-                    currType = SQLUtils.getSQLStringForField(field);
-                }
-                if (currType.isEmpty()) continue;
-                joiner.add(currType);
+            SQLQuery sql = new SQLQuery(currClass);
+            if (sql.getParamsIsSet()) {
+                repository.update(sql.getCreateTableSQL());
+            }else{
+                log.error("Error creating sql query for class "+currClass.getSimpleName());
             }
-
-            String sql = "CREATE TABLE IF NOT EXISTS " + nameOfTable +
-                    " (" + joiner + ")";
-
-            repository.update(sql);
         }
     }
 
@@ -65,64 +45,54 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public void persist(Object o) throws ObjectAlreadyExistException {
-        if (Utils.checkIfObjectInDB(o)
-        && !SQLUtils.getTypeOfIDField(o).contains("VARCHAR") ){
-            throw new ObjectAlreadyExistException("Object already exist in database!");
-            }
-        var currClass = o.getClass();
-        String nameOfTable = AnnotationsUtils.getNameOfTable(currClass);
-        Field[] declaredFields = currClass.getDeclaredFields();
-        StringJoiner joinerFields = new StringJoiner(",");
-        StringJoiner joinerDataFields = new StringJoiner(",");
-        var arrayOfFields = new ArrayList<>(declaredFields.length);
         var objectHasAutoIncrementID = SQLUtils.objectHasAutoIncrementID(o);
-        for (Field field : declaredFields) {
-            if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)
-                    || AnnotationsUtils.isAnnotationPresent(field,OneToMany.class)) {
-                continue;//to do
+
+        if (Utils.checkIfObjectInDB(o)
+        && objectHasAutoIncrementID){
+            throw new ObjectAlreadyExistException("Try to persist an existing object. Object "+o+" already exist in database!");
             }
-            var currData = Utils.getValueOfFieldForObject(o,field);
 
-            if(!objectHasAutoIncrementID &&
-                    AnnotationsUtils.isAnnotationPresent(field,Id.class)){
-                 currData = SQLUtils.generateIdForObject(o);
-            }
-            if (currData == null && !(objectHasAutoIncrementID &&
-                    AnnotationsUtils.isAnnotationPresent(field,Id.class))) continue;
-
-            joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
-            joinerDataFields.add("?");
-            arrayOfFields.add(SQLUtils.getDataObjectFieldInSQLType(o,field));
-        }
-
-        String sql = "INSERT INTO " + nameOfTable+" ("+joinerFields+")" +
-                " VALUES (" + joinerDataFields + ")";
-        if(objectHasAutoIncrementID) {
-            updateObjectWithAutoIncrementInDatabase(sql, arrayOfFields, o);
-        } else {
-            repository.update(sql, arrayOfFields);
+        if (!saveObjectToDB(o)){
+            log.error("Object "+o+" not saved in DB!");
         }
     }
 
-    private void updateObjectWithAutoIncrementInDatabase(String sql,List<Object> arrayOfFields, Object o){
-        var currClass = o.getClass();
-        Field[] declaredFields = currClass.getDeclaredFields();
-        Field idField = null;
-        for (Field field : declaredFields) {
-            if (AnnotationsUtils.isAnnotationPresent(field,Id.class)) {
-                idField = field;
+    private boolean saveObjectToDB(Object o){
+        SQLQuery sqlQuery = new SQLQuery(o);
+        var objectHasAutoIncrementID = sqlQuery.getObjectHasAutoIncrementID();
+        var generatedID = sqlQuery.getGeneratedID();
+        if(objectHasAutoIncrementID) {
+            return updateObjectWithAutoIncrementInDatabase(sqlQuery, o);
+        } else if(repository.update(sqlQuery.getInsertSQLWithParams(), sqlQuery.getArrayOfFields()) && generatedID != null ) {
+            var fieldID = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
+            if (fieldID != null) {
+                Utils.setValueOfFieldForObject(o,fieldID,generatedID);
+                return true;
             }
         }
+        return false;
+    }
 
+    private boolean updateObjectWithAutoIncrementInDatabase(SQLQuery sqlQuery, Object o){
+        Field idField = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
         if(idField != null && SQLUtils.objectHasAutoIncrementID(o)) {
-            var mapper = Utils.getMapperForObject(o);
-            if (mapper == null) {
-                return;
+            if (Utils.checkIfObjectInDB(o)) {
+                var arrayOfFields = sqlQuery.getArrayOfFields();
+                arrayOfFields.add(SQLUtils.getDataObjectFieldInSQLType(o, idField));
+                return repository.update(sqlQuery.getUpdateSQLWithIdParam(),arrayOfFields);
             }
-            var objectWithId = repository.updateAndGetObjectWithID(sql, arrayOfFields,mapper);
+            var mapper = Utils.getMapperForClass(o.getClass());
+            if (mapper == null) {
+                return false;
+            }
+            var objectWithId = repository.updateAndGetObjectWithID(sqlQuery.getInsertSQLWithParams(), sqlQuery.getArrayOfFields(),mapper);
+            if (objectWithId == null) {
+                return false;
+            }
             Utils.copyValueOfFieldForObject(o,objectWithId,idField);
+            return true;
         }else {
-            repository.update(sql, arrayOfFields);
+            return repository.update(sqlQuery.getInsertSQLWithParams(), sqlQuery.getArrayOfFields());
         }
     }
 
@@ -148,12 +118,28 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public <T> T merge(T o) {
-        return null;
+        var field = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
+        if (field == null){
+            log.error("Try to merge object without id field!");
+            return o;
+        }
+        saveObjectToDB(o);
+        return o;
     }
 
     @Override
     public <T> T refresh(T o) {
-        return null;
+        var field = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
+        if (field == null){
+            log.error("Try to refresh object without id field!");
+            return o;
+        }
+        var currId = Utils.getValueOfFieldForObject(o,field);
+        var objectFromDB = findById((Serializable) currId,o.getClass());
+
+        objectFromDB.ifPresent(objFrom -> Utils.copyFieldsOfObject(o,objFrom));
+
+        return o;
     }
 
     @Override

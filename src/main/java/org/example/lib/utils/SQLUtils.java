@@ -151,13 +151,10 @@ public class SQLUtils {
         if (intTypeSQL.equals(Types.INTEGER)
                 || intTypeSQL.equals(Types.BIGINT)) {
             var currType = AnnotationsUtils.getIdType(field);
-            if (currType == Id.IDType.SERIAL) {
-                return true;
-            }
+            return currType == Id.IDType.SERIAL;
         }
         return false;
     }
-
 
     private static String getTypeOfPrimaryKeyFieldSQL(Field field) {
         var type = field.getType();
@@ -172,7 +169,6 @@ public class SQLUtils {
         }
         return typeSQL;
     }
-
 
     public static Object getDataObjectFieldInSQLType(Object o, Field field) {
         var currData = Utils.getValueOfFieldForObject(o, field);
@@ -208,8 +204,10 @@ public class SQLUtils {
     }
 
     public static boolean objectHasAutoIncrementID(Object o) {
-        //to do
-        return true;
+        var field = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
+        if (field == null) return false;
+
+        return idFieldIsAutoIncrementOnDBSide(field);
     }
 
     public static Object generateIdForObject(Object o) {

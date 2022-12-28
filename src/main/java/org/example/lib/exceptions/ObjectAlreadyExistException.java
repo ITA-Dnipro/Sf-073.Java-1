@@ -1,5 +1,8 @@
 package org.example.lib.exceptions;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class ObjectAlreadyExistException extends RuntimeException {
     /**
      * Constructs a new exception with the specified detail message and
@@ -13,6 +16,7 @@ public class ObjectAlreadyExistException extends RuntimeException {
      */
     public ObjectAlreadyExistException(String message) {
         super(message);
+        log.error(message);
     }
 }
 
