@@ -8,14 +8,39 @@ import org.example.lib.service.Mapper;
 import org.example.lib.service.MapperType;
 import org.example.model.Book;
 import org.example.model.Publisher;
+import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.util.Properties;
 
 @Slf4j
 public class Utils {
     private Utils() {
+    }
+
+    public static ORManager getORMImplementation(String filename) {
+        Properties prop = new Properties();
+
+        try {
+            InputStream input = Utils.class.getClassLoader()
+                    .getResourceAsStream(filename);
+            prop.load(input);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load properties from file: " + filename, e);
+        }
+
+        JdbcDataSource datasource = new JdbcDataSource();
+        datasource.setURL(prop.getProperty("jdbc-url"));
+        datasource.setUser(prop.getProperty("jdbc-username"));
+        datasource.setPassword(prop.getProperty("jdbc-password"));
+
+        return ORManager.withDataSource(datasource);
     }
 
     public static ORManager getORMImplementation(DataSource dataSource) {

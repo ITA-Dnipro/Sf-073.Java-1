@@ -23,6 +23,11 @@ public class ORManagerImpl implements ORManager {
     }
 
     @Override
+    public boolean checkConnectionToDB() {
+        return repository.checkConnection();
+    }
+
+    @Override
     public void register(Class... entityClasses) {
         for (Class currClass : entityClasses) {
             SQLQuery sql = new SQLQuery(currClass);

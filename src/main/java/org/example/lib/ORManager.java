@@ -39,28 +39,15 @@ public interface ORManager {
     // read the jdbc url, username and password from
     //  the given property file
     static ORManager withPropertiesFrom(String filename) {
-
-       Properties prop = new Properties();
-        try (InputStream input = new FileInputStream(filename)) {
-            prop.load(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load properties from file: " + filename, e);
-        }
-
-        JdbcDataSource datasource = new JdbcDataSource();
-        datasource.setURL(prop.getProperty("jdbc-url"));
-        datasource.setUser(prop.getProperty("jdbc-username"));
-        datasource.setPassword(prop.getProperty("jdbc-password"));
-
-        return withDataSource(datasource);
+        return Utils.getORMImplementation(filename);
     }
 
     // initialize connection factory for the DB based on the DataSource
     static ORManager withDataSource(DataSource dataSource) {
-
         return Utils.getORMImplementation(dataSource);
     }
 
+    boolean checkConnectionToDB();
 
     // generate the schema in the DB
     // for given list of entity classes (and all related
