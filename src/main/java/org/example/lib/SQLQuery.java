@@ -23,6 +23,7 @@ public class SQLQuery {
     private Boolean objectHasAutoIncrementID;
     private Object generatedID;
     private Boolean paramsIsSet;
+
     public SQLQuery(Object o) {
         setParamsByObject(o);
     }
@@ -104,5 +105,9 @@ public class SQLQuery {
     public String getCreateTableSQL() {
         return "CREATE TABLE IF NOT EXISTS " + sqlTable +
                 " (" + sqlFields + ")";
+    }
+
+    public String getDeleteSQLWithParams() {
+        return "DELETE FROM " + sqlTable + " where id = ?";
     }
 }
