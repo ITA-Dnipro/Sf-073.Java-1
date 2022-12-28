@@ -1,10 +1,10 @@
 package org.example.lib;
 
-import org.example.lib.ORManager;
+
+import org.example.lib.utils.Utils;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,40 +12,50 @@ import static org.junit.jupiter.api.Assertions.*;
 class ORManagerImplTest {
 
     @Test
-    void getConnection() throws SQLException {
-//TO DO
-        // load properties from file
-//        ORManager orm = ORManager.withPropertiesFrom("src/main/java/resources/db.properties");
-//
-//        // create a connection to the database
-//        Connection conn = orm.getConnection();
-//
-//        // make sure the connection is valid
-//        assertTrue(conn.isValid(10));
-//
-//        // close the connection
-//        conn.close();
+    void given_fileName_ORMangerWithPropertiesFrom_then_connect() {
 
+        String fileName = "db.properties";
+        // load properties from file
+        ORManager orm = ORManager.withPropertiesFrom(fileName);
+
+        // make sure the connection is valid
+        assertTrue(orm.checkConnectionToDB());
     }
 
     @Test
-    void given_Datasource_when_geH2DataSource_then_can_connect() throws Exception {
+    void given_datasource_when_getORMImplementation_then_connect()  {
 
         JdbcDataSource dataSource = new JdbcDataSource();
 
-        dataSource.setURL("jdbc:h2:file:./ormdb");
-        dataSource.setUser("");
-        dataSource.setPassword("");
+        dataSource.setURL("jdbc:h2:file:./ORMAnager");
+        dataSource.setUser("sa");
+        dataSource.setPassword("password");
+        ORManager res = Utils.getORMImplementation(dataSource);
 
-        ORManager.withDataSource(dataSource);
 
-        //Connection connection = ds.getConnection();
-
-        //assertTrue(connection.isValid(1000));
+        assertTrue(res.checkConnectionToDB());
     }
 
-    @Test
-    void updateConnection() {
 
+    @Test
+    void given_empty_fileName_ORMangerWithPropertiesFrom_then_connection_invalid() {
+        // empty file name
+        String fileName = "";
+
+        ORManager orm = ORManager.withPropertiesFrom(fileName);
+
+        assertThrows(NullPointerException.class,
+                orm::checkConnectionToDB);
+    }
+
+
+    @Test
+    void given_empty_datasource_when_getORMImplementation_then_connection_invalid() {
+
+        JdbcDataSource dataSource = new JdbcDataSource();
+
+        ORManager res = Utils.getORMImplementation(dataSource);
+
+        assertFalse(res.checkConnectionToDB());
     }
 }
