@@ -42,6 +42,19 @@ public class Utils {
         }
     }
 
+    public static void setNullToFieldForObject(Object o, Field field) {
+        var methodName = Utils.firstUpperCase(field.getName());
+        var className = o.getClass().getName();
+        try {
+            var methodObject = o.getClass().getDeclaredMethod("set" + Utils.firstUpperCase(field.getName()));
+            methodObject.invoke(o, null);
+        } catch (NoSuchMethodException e) {
+            log.error("Method " + methodName + " for " + className + " is not found! " + e);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            log.error("Calling " + methodName + " for " + className + " led to an error:" + e);
+        }
+    }
+
     public static void setValueOfFieldForObject(Object o, Field field, Object value) {
         var methodName = Utils.firstUpperCase(field.getName());
         var className = o.getClass().getName();

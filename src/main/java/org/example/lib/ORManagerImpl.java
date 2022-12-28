@@ -168,7 +168,7 @@ public class ORManagerImpl implements ORManager {
         var status = repository.update(sql, params);
 
         if(status && sqlQuery.getObjectHasAutoIncrementID()){
-            Utils.setValueOfFieldForObject(o, idField,null);
+            Utils.setNullToFieldForObject(o, idField);
         }
 
         return status;
