@@ -23,6 +23,7 @@ public class SQLQuery {
     private Boolean objectHasAutoIncrementID;
     private Object generatedID;
     private Boolean paramsIsSet;
+
     public SQLQuery(Object o) {
         setParamsByObject(o);
     }
