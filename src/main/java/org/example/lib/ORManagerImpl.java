@@ -144,6 +144,17 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public boolean delete(Object o) {
-        return false;
+        Field idField = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
+        var currValue = SQLUtils.getDataObjectFieldInSQLType(o, idField);
+        if (currValue == null){
+            log.error("Cannot delete object because id is null or not set "+o);
+            return false;
+        }
+        SQLQuery sqlQuery = new SQLQuery(o);
+        String sql = sqlQuery.getDeleteSQLWithParams();
+        ArrayList<Object> params = new ArrayList<>();
+        params.add(currValue);
+
+        return repository.update(sql, params);
     }
 }

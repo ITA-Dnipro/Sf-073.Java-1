@@ -105,4 +105,8 @@ public class SQLQuery {
         return "CREATE TABLE IF NOT EXISTS " + sqlTable +
                 " (" + sqlFields + ")";
     }
+
+    public String getDeleteSQLWithParams() {
+        return "DELETE FROM " + sqlTable + " where id = ?";
+    }
 }
