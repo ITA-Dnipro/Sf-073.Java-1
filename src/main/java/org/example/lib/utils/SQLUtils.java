@@ -144,6 +144,18 @@ public class SQLUtils {
         return currType == null ? "" : currType;
     }
 
+    public static boolean idFieldIsAutoIncrementOnDBSide(Field field) {
+        var type = field.getType();
+        Integer intTypeSQL = getJDBCTypeNumber(type);
+        String typeSQL = getNameJdbcTypeById(intTypeSQL);
+        if (intTypeSQL.equals(Types.INTEGER)
+                || intTypeSQL.equals(Types.BIGINT)) {
+            var currType = AnnotationsUtils.getIdType(field);
+            return currType == Id.IDType.SERIAL;
+        }
+        return false;
+    }
+
     private static String getTypeOfPrimaryKeyFieldSQL(Field field) {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
@@ -157,7 +169,6 @@ public class SQLUtils {
         }
         return typeSQL;
     }
-
 
     public static Object getDataObjectFieldInSQLType(Object o, Field field) {
         var currData = Utils.getValueOfFieldForObject(o, field);
@@ -178,7 +189,7 @@ public class SQLUtils {
 
     private static java.sql.Date convertLocalDateTimeToSQLDate(LocalDateTime dateValue) {
         // convert from LocalDateTime to java.sql.date while retaining
-        // the time part without havng to make assumptions about the time-zone
+        // the time part without having to make assumptions about the time-zone
         // by using java.util.Date as an intermediary
         java.util.Date utilDate;
         String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
@@ -192,4 +203,14 @@ public class SQLUtils {
         return new java.sql.Date(utilDate.getTime());
     }
 
+    public static boolean objectHasAutoIncrementID(Object o) {
+        var field = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
+        if (field == null) return false;
+
+        return idFieldIsAutoIncrementOnDBSide(field);
+    }
+
+    public static Object generateIdForObject(Object o) {
+        return null; //to do
+    }
 }

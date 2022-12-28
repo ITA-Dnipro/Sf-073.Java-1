@@ -4,6 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
+import org.example.lib.service.Mapper;
+import org.example.lib.service.MapperType;
+import org.example.model.Book;
+import org.example.model.Publisher;
 import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
@@ -48,6 +52,34 @@ public class Utils {
         return word.substring(0, 1).toUpperCase() + word.substring(1);
     }
 
+    public static <T> void copyFieldsOfObject(T o, Object objFrom) {
+        var currClass = o.getClass();
+        Field[] declaredFields = currClass.getDeclaredFields();
+        for (Field field : declaredFields) {
+            copyValueOfFieldForObject(o, objFrom, field);
+        }
+    }
+
+    public static void copyValueOfFieldForObject(Object objTo, Object objFrom, Field idField) {
+        var currentValue = getValueOfFieldForObject(objFrom, idField);
+        if (currentValue != null) {
+            setValueOfFieldForObject(objTo, idField, currentValue);
+        }
+    }
+
+    public static void setValueOfFieldForObject(Object o, Field field, Object value) {
+        var methodName = Utils.firstUpperCase(field.getName());
+        var className = o.getClass().getName();
+        try {
+            var methodObject = o.getClass().getDeclaredMethod("set" + Utils.firstUpperCase(field.getName()), value.getClass());
+            methodObject.invoke(o, value);
+        } catch (NoSuchMethodException e) {
+            log.error("Method " + methodName + " for " + className + " is not found! " + e);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            log.error("Calling " + methodName + " for " + className + " led to an error:" + e);
+        }
+    }
+
     public static Object getValueOfFieldForObject(Object o, Field field) {
         var methodName = Utils.firstUpperCase(field.getName());
         var className = o.getClass().getName();
@@ -72,4 +104,14 @@ public class Utils {
         return primaryKey != null;
     }
 
+    public static <T> Mapper<T> getMapperForClass(Class<?> cls) {
+        if (cls == Book.class) {
+            return MapperType.BOOK.make();
+        }
+        if (cls == Publisher.class) {
+            return MapperType.PUBLISHER.make();
+        }
+        log.error("An error while getting mapper for class " + cls.getSimpleName());
+        return null;
+    }
 }
