@@ -135,22 +135,4 @@ public class AnnotationsTest {
         assertEquals(expectedColumnName, columnName);
     }
 
-    @Test
-    void test_createTableDdl_when_MinimalEntityIsProvided_should_produceExpectedDDL() {
-        @Entity
-        class MinimalEntity {
-            @Id
-            Long id;
-        }
-        String expectedDdl = """
-                create table if not exists MinimalEntity (
-                  id bigint not null,
-                  primary key (id)
-                );
-                """;
-
-        String res = Utils.createTableDdl(MinimalEntity.class);
-
-        // assertEquals(res.toLowerCase(),expectedDdl.toLowerCase());
-    }
 }
