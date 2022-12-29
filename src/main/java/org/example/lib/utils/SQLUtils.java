@@ -82,7 +82,7 @@ public class SQLUtils {
             var method = Enumerated.class.getDeclaredMethod("value");
             currType = (Enumerated.EnumType) method.invoke(null);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException se) {
-            log.error("An error while get type of field " + field.getName() + ":" + se.getMessage());
+            log.error("An error while get type of field " + field.getName() + ":" + se);
         }
 
         if (AnnotationsUtils.isAnnotationPresent(field, Enumerated.class)) {
@@ -129,7 +129,7 @@ public class SQLUtils {
             try {
                 result.put((Integer) field.get(null), field.getName());
             } catch (IllegalAccessException e) {
-                log.error("An error while get type from JDBC types " + field.getName() + ":" + e.getMessage());
+                log.error("An error while get type from JDBC types " + field.getName() + ":" + e);
             }
         }
 

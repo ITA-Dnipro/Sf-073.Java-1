@@ -35,7 +35,7 @@ public class MapperImpl<T> implements Mapper<T> {
             Utils.setValueOfFieldForObject(obj,field,value);
             return obj;
         } catch (Exception e) {
-            log.error("Exception caught in mapRow: " + e.getMessage());
+            log.error("Exception caught in mapRow: " + e);
             return null;
         }
     }
@@ -51,7 +51,7 @@ public class MapperImpl<T> implements Mapper<T> {
             }
             return obj;
         } catch (Exception e) {
-            log.error("Exception caught in mapRow: " + e.getMessage());
+            log.error("Exception caught in mapRow: " + e);
             return null;
         }
     }

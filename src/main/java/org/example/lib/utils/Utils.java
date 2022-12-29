@@ -30,7 +30,7 @@ public class Utils {
                     .getResourceAsStream(filename);
             prop.load(input);
         } catch (IOException e) {
-            log.error("Error reading file "+filename+": "+e.getMessage());
+            log.error("Error reading file "+filename+": "+e);
             System.exit(0);
         }
 

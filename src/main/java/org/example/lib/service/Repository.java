@@ -24,7 +24,7 @@ public class Repository {
         try {
             return getConnection().isValid(10);
         } catch (SQLException e) {
-            log.error("An error while getting connection " + e.getMessage());
+            log.error("An error while getting connection " + e);
             return false;
         }
     }
@@ -36,7 +36,7 @@ public class Repository {
             return pstmt.executeUpdate()>0;
         } catch (SQLException se) {
             //Handle errors for JDBC
-            log.error("An error while update object DB " + se.getMessage());
+            log.error("An error while update object DB " + se);
         }
         return false;
     }
@@ -60,7 +60,7 @@ public class Repository {
             }
         } catch (SQLException se) {
             //Handle errors for JDBC
-            log.error("An error while update and get ID for object DB " + se.getMessage());
+            log.error("An error while update and get ID for object DB " + se);
         }
         return null;
     }
@@ -72,7 +72,7 @@ public class Repository {
             return stmt.executeUpdate(sql) > 0;
         } catch (SQLException se) {
             //Handle errors for JDBC
-            log.error("An error while update DB " + se.getMessage());
+            log.error("An error while update DB " + se);
         }
         return false;
     }
@@ -89,7 +89,7 @@ public class Repository {
             return null;
         } catch (SQLException se) {
             //Handle errors for JDBC
-            log.error("An error while queryForObject " + se.getMessage());
+            log.error("An error while queryForObject " + se);
         }
         return null;
     }
@@ -103,7 +103,7 @@ public class Repository {
             return mapper.mapRows(resultSet);
         } catch (SQLException se) {
             //Handle errors for JDBC
-            log.error("An error while query queryForList " + se.getMessage());
+            log.error("An error while query queryForList " + se);
         }
 
         return objectList;
