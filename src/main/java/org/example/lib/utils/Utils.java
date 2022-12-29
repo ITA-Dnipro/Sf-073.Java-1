@@ -5,6 +5,7 @@ import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
 import org.example.lib.service.Mapper;
+import org.example.lib.service.MapperImpl;
 import org.example.lib.service.MapperType;
 import org.example.model.Book;
 import org.example.model.Publisher;
@@ -140,14 +141,4 @@ public class Utils {
         return primaryKey != null;
     }
 
-    public static <T> Mapper<T> getMapperForClass(Class<?> cls) {
-        if (cls == Book.class) {
-            return MapperType.BOOK.make();
-        }
-        if (cls == Publisher.class) {
-            return MapperType.PUBLISHER.make();
-        }
-        log.error("An error while getting mapper for class " + cls.getSimpleName());
-        return null;
-    }
 }
