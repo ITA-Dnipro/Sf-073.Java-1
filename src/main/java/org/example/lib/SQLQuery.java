@@ -84,7 +84,7 @@ public class SQLQuery {
                     AnnotationsUtils.isAnnotationPresent(field, Id.class))) continue;
 
             joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
-            arrayOfFields.add(SQLUtils.getDataObjectFieldInSQLType(o, field));
+            arrayOfFields.add(SQLUtils.getValueFieldFromJavaToSQLType(o, field));
             joinerDataFields.add("?");
         }
         this.sqlDataFields = joinerDataFields.toString();

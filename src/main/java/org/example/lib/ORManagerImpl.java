@@ -3,6 +3,7 @@ package org.example.lib;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
+import org.example.lib.service.MapperImpl;
 import org.example.lib.service.Repository;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
@@ -83,13 +84,11 @@ public class ORManagerImpl implements ORManager {
         if(idField != null && SQLUtils.objectHasAutoIncrementID(o)) {
             if (Utils.checkIfObjectInDB(o)) {
                 var arrayOfFields = sqlQuery.getArrayOfFields();
-                arrayOfFields.add(SQLUtils.getDataObjectFieldInSQLType(o, idField));
+                arrayOfFields.add(SQLUtils.getValueFieldFromJavaToSQLType(o, idField));
                 return repository.update(sqlQuery.getUpdateSQLWithIdParam(),arrayOfFields);
             }
-            var mapper = Utils.getMapperForClass(o.getClass());
-            if (mapper == null) {
-                return false;
-            }
+            var mapper = new MapperImpl<>(o.getClass());
+
             var objectWithId = repository.updateAndGetObjectWithID(sqlQuery.getInsertSQLWithParams(), sqlQuery.getArrayOfFields(),mapper);
             if (objectWithId == null) {
                 return false;
@@ -155,7 +154,7 @@ public class ORManagerImpl implements ORManager {
             return false;
         }
 
-        var currValue = SQLUtils.getDataObjectFieldInSQLType(o, idField);
+        var currValue = SQLUtils.getValueFieldFromJavaToSQLType(o, idField);
         if (currValue == null){
             log.error("Cannot delete object because id is null or not set "+o);
             return false;

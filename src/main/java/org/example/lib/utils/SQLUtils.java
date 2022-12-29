@@ -170,8 +170,8 @@ public class SQLUtils {
         return typeSQL;
     }
 
-    public static Object getDataObjectFieldInSQLType(Object o, Field field) {
-        var currData = Utils.getValueOfFieldForObject(o, field);
+    public static Object getValueFieldFromJavaToSQLType(Object o, Field field) {
+        var currData = Utils.getValueOfFieldForObject(o, field); //to do
         var type = field.getType();
         if (currData == null) return null;
 
@@ -185,6 +185,10 @@ public class SQLUtils {
             return Time.valueOf((LocalTime) currData);
         }
         return currData;
+    }
+
+    public static Object getValueFieldFromSQLToJavaType(Object currData, Field field) {
+       return null;
     }
 
     private static java.sql.Date convertLocalDateTimeToSQLDate(LocalDateTime dateValue) {
@@ -212,5 +216,37 @@ public class SQLUtils {
 
     public static Object generateIdForObject(Object o) {
         return null; //to do
+    }
+
+    public static Object getValueForFieldFromResultSet(ResultSet resultSet, Field field) {
+        var columnName = AnnotationsUtils.getNameOfColumn(field);
+        var type = field.getType();
+        try {
+            if (type == int.class) {
+                return resultSet.getInt(columnName);
+            } else if (type == long.class) {
+                return resultSet.getLong(columnName);
+            } else if (type == short.class) {
+                return resultSet.getShort(columnName);
+            } else if (type == byte.class) {
+                return resultSet.getByte(columnName);
+            } else if (type == float.class) {
+                return resultSet.getFloat(columnName);
+            } else if (type == double.class) {
+                return resultSet.getDouble(columnName);
+            } else if (type == boolean.class) {
+                return resultSet.getBoolean(columnName);
+            } else if (type == LocalDate.class || type == LocalDateTime.class) {
+                return getValueFieldFromSQLToJavaType(resultSet.getDate(columnName),field);
+            } else if (type == Instant.class) {
+                return getValueFieldFromSQLToJavaType(resultSet.getTimestamp(columnName),field);
+            } else if (type == LocalTime.class) {
+                return getValueFieldFromSQLToJavaType(resultSet.getTime(columnName),field);
+            }
+            return resultSet.getObject(columnName);
+        } catch (SQLException e) {
+            log.error("An error while getting value for " + field.getName() + "! " + e);
+        }
+        return null;
     }
 }
