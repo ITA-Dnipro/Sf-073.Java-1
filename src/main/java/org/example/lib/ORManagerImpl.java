@@ -56,7 +56,9 @@ public class ORManagerImpl implements ORManager {
 
         if (Utils.checkIfObjectInDB(o)
         && objectHasAutoIncrementID){
-            throw new ObjectAlreadyExistException("Try to persist an existing object. Object "+o+" already exist in database!");
+            var message = "Try to persist an existing object. Object "+o+" already exist in database!";
+            log.error(message);
+            throw new ObjectAlreadyExistException(message);
             }
 
         if (!saveObjectToDB(o)){
