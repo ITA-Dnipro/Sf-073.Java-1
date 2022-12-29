@@ -55,14 +55,4 @@ public class MapperImpl<T> implements Mapper<T> {
             return null;
         }
     }
-
-    @Override
-    public List<T> mapRows(ResultSet resultSet) throws SQLException {
-//to do
-        List<T> objectList = new ArrayList<>();
-        while (resultSet.next()) {
-            objectList.add(mapRow(resultSet));
-        }
-        return objectList;
-    }
 }

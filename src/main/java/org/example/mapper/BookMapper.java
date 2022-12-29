@@ -25,16 +25,4 @@ public class BookMapper implements Mapper<Book>  {
         return currBook;
     }
 
-
-
-    @Override
-    public List<Book> mapRows(ResultSet resultSet) throws SQLException {
-        List<Book> bookList = new ArrayList<>();
-
-        while(resultSet.next()){
-            bookList.add(mapRow(resultSet));
-        }
-
-        return bookList;
-    }
 }

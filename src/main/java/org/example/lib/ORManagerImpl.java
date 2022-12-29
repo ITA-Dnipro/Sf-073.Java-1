@@ -3,6 +3,7 @@ package org.example.lib;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
+import org.example.lib.service.Mapper;
 import org.example.lib.service.MapperImpl;
 import org.example.lib.service.Repository;
 import org.example.lib.utils.AnnotationsUtils;
@@ -79,7 +80,7 @@ public class ORManagerImpl implements ORManager {
         return false;
     }
 
-    private boolean updateObjectWithAutoIncrementInDatabase(SQLQuery sqlQuery, Object o){
+    private <T> boolean updateObjectWithAutoIncrementInDatabase(SQLQuery sqlQuery, T o){
         Field idField = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
         if(idField != null && SQLUtils.objectHasAutoIncrementID(o)) {
             if (Utils.checkIfObjectInDB(o)) {
@@ -87,7 +88,7 @@ public class ORManagerImpl implements ORManager {
                 arrayOfFields.add(SQLUtils.getValueFieldFromJavaToSQLType(o, idField));
                 return repository.update(sqlQuery.getUpdateSQLWithIdParam(),arrayOfFields);
             }
-            var mapper = new MapperImpl<>(o.getClass());
+            Mapper<T> mapper = new MapperImpl(o.getClass());
 
             var objectWithId = repository.updateAndGetObjectWithID(sqlQuery.getInsertSQLWithParams(), sqlQuery.getArrayOfFields(),mapper);
             if (objectWithId == null) {
