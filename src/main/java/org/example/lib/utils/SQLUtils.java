@@ -188,7 +188,7 @@ public class SQLUtils {
     }
 
     public static Object getValueFieldFromSQLToJavaType(Object currData, Field field) {
-       return null;
+       return currData;
     }
 
     private static java.sql.Date convertLocalDateTimeToSQLDate(LocalDateTime dateValue) {
