@@ -21,13 +21,14 @@ public class Repository {
     }
 
     public boolean checkConnection() {
-        try {
-            return getConnection().isValid(10);
+        try (Connection conn = getConnection()){
+            return conn.isValid(10);
         } catch (SQLException e) {
             log.error("An error while getting connection " + e);
             return false;
         }
     }
+
     public boolean update(String sql, List<Object> params) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
