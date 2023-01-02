@@ -4,11 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
-import org.example.lib.service.Mapper;
-import org.example.lib.service.MapperImpl;
-import org.example.lib.service.MapperType;
-import org.example.model.Book;
-import org.example.model.Publisher;
 import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
