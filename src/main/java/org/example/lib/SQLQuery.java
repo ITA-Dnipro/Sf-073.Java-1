@@ -109,7 +109,7 @@ public class SQLQuery {
     }
 
     public  String getSelectSQLWithParams() {
-        return "SELECT FROM " + sqlTable + " where id = ?";
+        return "SELECT * FROM " + sqlTable + " where id = ?";
     }
 
 
