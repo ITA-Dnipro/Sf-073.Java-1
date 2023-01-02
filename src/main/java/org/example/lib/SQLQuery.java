@@ -66,7 +66,6 @@ public class SQLQuery {
         Field[] declaredFields = currClass.getDeclaredFields();
         StringJoiner joinerFields = new StringJoiner(",");
         StringJoiner joinerDataFields = new StringJoiner(",");
-        this.generatedID = SQLUtils.generateIdForObject(o);
         this.arrayOfFields = new ArrayList<>(declaredFields.length);
 
         for (Field field : declaredFields) {
@@ -99,7 +98,7 @@ public class SQLQuery {
 
     public String getUpdateSQLWithIdParam() {
         return "UPDATE " + sqlTable + " SET " + sqlFields.replaceAll(",","=?, ") +"=?"+
-                " where id = ?";
+                " where id = ?"; //to do check name of id field
     }
 
     public String getCreateTableSQL() {
@@ -108,6 +107,6 @@ public class SQLQuery {
     }
 
     public String getDeleteSQLWithParams() {
-        return "DELETE FROM " + sqlTable + " where id = ?";
+        return "DELETE FROM " + sqlTable + " where id = ?"; //to do check name of id field
     }
 }

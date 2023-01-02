@@ -40,7 +40,7 @@ public class SQLUtils {
 
     public static String getSQLStringForIdField(Field field) {
         String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
-        return field.getName() + " " + typeOfPKEYField + " PRIMARY KEY";
+        return AnnotationsUtils.getNameOfColumn(field) + " " + typeOfPKEYField + " PRIMARY KEY";
     }
 
     private static String getTypeOfFieldSQL(Field field) {
