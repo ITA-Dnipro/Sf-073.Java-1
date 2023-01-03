@@ -52,7 +52,8 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public void persist(Object o) throws ObjectAlreadyExistException {
-        var objectHasAutoIncrementID = SQLUtils.objectHasAutoIncrementID(o);
+        SQLQuery sqlQuery = new SQLQuery(o);
+        var objectHasAutoIncrementID = sqlQuery.getObjectHasAutoIncrementID();
 
         if (Utils.checkIfObjectInDB(o)
         && objectHasAutoIncrementID){
@@ -61,28 +62,23 @@ public class ORManagerImpl implements ORManager {
             throw new ObjectAlreadyExistException(message);
             }
 
-        if (!saveObjectToDB(o)){
-            log.error("Object "+o+" not saved in DB!");
-        }
-    }
-
-    private boolean saveObjectToDB(Object o){
-        SQLQuery sqlQuery = new SQLQuery(o);
-        var objectHasAutoIncrementID = sqlQuery.getObjectHasAutoIncrementID();
         var generatedID = sqlQuery.getGeneratedID();
+        var status = false;
         if(objectHasAutoIncrementID) {
-            return updateObjectWithAutoIncrementInDatabase(sqlQuery, o);
+            status = insertObjectWithAutoIncrementToDatabase(sqlQuery, o);
         } else if(repository.update(sqlQuery.getInsertSQLWithParams(), sqlQuery.getArrayOfFields()) && generatedID != null ) {
             var fieldID = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
             if (fieldID != null) {
                 Utils.setValueOfFieldForObject(o,fieldID,generatedID);
-                return true;
+                status = true;
             }
         }
-        return false;
+        if (!status){
+            log.error("Object "+o+" not saved in DB!");
+        }
     }
 
-    private <T> boolean updateObjectWithAutoIncrementInDatabase(SQLQuery sqlQuery, T o){
+    private <T> boolean insertObjectWithAutoIncrementToDatabase(SQLQuery sqlQuery, T o){
         Field idField = AnnotationsUtils.getFieldByAnnotation(o,Id.class);
         if(idField != null && SQLUtils.objectHasAutoIncrementID(o)) {
             if (Utils.checkIfObjectInDB(o)) {
@@ -160,7 +156,8 @@ public class ORManagerImpl implements ORManager {
             log.error("Try to merge object without id field!");
             return o;
         }
-        saveObjectToDB(o);
+        SQLQuery sqlQuery = new SQLQuery(o);
+        repository.update(sqlQuery.getUpdateSQLWithIdParam(), sqlQuery.getArrayOfFields());
         return o;
     }
 

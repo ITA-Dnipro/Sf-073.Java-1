@@ -2,8 +2,6 @@ package org.example.lib.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.Id;
-import org.example.lib.annotations.ManyToOne;
-import org.example.lib.annotations.OneToMany;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
@@ -11,8 +9,6 @@ import org.example.lib.utils.Utils;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class MapperImpl<T> implements Mapper<T> {

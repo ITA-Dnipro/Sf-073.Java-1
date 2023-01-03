@@ -40,7 +40,7 @@ public class SQLUtils {
 
     public static String getSQLStringForIdField(Field field) {
         String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
-        return field.getName() + " " + typeOfPKEYField + " PRIMARY KEY";
+        return AnnotationsUtils.getNameOfColumn(field) + " " + typeOfPKEYField + " PRIMARY KEY";
     }
 
     private static String getTypeOfFieldSQL(Field field) {
@@ -108,9 +108,9 @@ public class SQLUtils {
         mapOfTypes.put(Boolean.class, Types.BIT);
         mapOfTypes.put(LocalDate.class, Types.DATE);
         mapOfTypes.put(LocalTime.class, Types.TIME);
-        mapOfTypes.put(LocalDateTime.class, Types.DATE);
+        mapOfTypes.put(LocalDateTime.class, Types.TIMESTAMP);
         mapOfTypes.put(Instant.class, Types.TIMESTAMP);
-        mapOfTypes.put(BigDecimal.class, Types.NUMERIC);
+        mapOfTypes.put(BigDecimal.class, Types.VARCHAR);
         mapOfTypes.put(String.class, Types.NVARCHAR);
 
         //add types for sql.date and sql.time
@@ -175,36 +175,36 @@ public class SQLUtils {
         var type = field.getType();
         if (currData == null) return null;
 
-        if (type == LocalDate.class) {
+        if (type == BigDecimal.class) {
+            return currData.toString();
+        } else if (type == LocalDate.class) {
             return Date.valueOf((LocalDate) currData);
         } else if (type == Instant.class) {
             return Timestamp.from((Instant) currData);
         } else if (type == LocalDateTime.class) {
-            return convertLocalDateTimeToSQLDate((LocalDateTime) currData);
+            return Timestamp.valueOf((LocalDateTime) currData);
         } else if (type == LocalTime.class) {
             return Time.valueOf((LocalTime) currData);
         }
         return currData;
     }
 
-    public static Object getValueFieldFromSQLToJavaType(Object currData, Field field) {
-       return currData;
-    }
+    private static Object getValueFieldFromSQLToJavaType(Object currData, Field field) {
+        var type = field.getType();
+        if (currData == null) return null;
 
-    private static java.sql.Date convertLocalDateTimeToSQLDate(LocalDateTime dateValue) {
-        // convert from LocalDateTime to java.sql.date while retaining
-        // the time part without having to make assumptions about the time-zone
-        // by using java.util.Date as an intermediary
-        java.util.Date utilDate;
-        String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
-        DateTimeFormatter dtf1 = DateTimeFormatter.ofPattern(dateFormat);
-        SimpleDateFormat sdf1 = new SimpleDateFormat(dateFormat);
-        try {
-            utilDate = sdf1.parse(dateValue.format(dtf1));
-        } catch (ParseException e) {
-            return null;
+        if (type == BigDecimal.class) {
+            return new BigDecimal((String) currData);
+        } else if (type == LocalDate.class) {
+            return ((Date) currData).toLocalDate();
+        } else if (type == Instant.class) {
+            return ((Timestamp) currData).toInstant();
+        } else if (type == LocalDateTime.class) {
+            return ((Timestamp) currData).toLocalDateTime();
+        } else if (type == LocalTime.class) {
+            return ((Time) currData).toLocalTime();
         }
-        return new java.sql.Date(utilDate.getTime());
+       return currData;
     }
 
     public static boolean objectHasAutoIncrementID(Object o) {
@@ -242,6 +242,8 @@ public class SQLUtils {
                 return getValueFieldFromSQLToJavaType(resultSet.getTimestamp(columnName),field);
             } else if (type == LocalTime.class) {
                 return getValueFieldFromSQLToJavaType(resultSet.getTime(columnName),field);
+            } else if (type == BigDecimal.class) {
+                return getValueFieldFromSQLToJavaType(resultSet.getString(columnName),field);
             }
             return resultSet.getObject(columnName);
         } catch (SQLException e) {
