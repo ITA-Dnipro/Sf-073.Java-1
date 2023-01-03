@@ -5,7 +5,6 @@ import org.example.lib.utils.Utils;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 
-import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 

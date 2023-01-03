@@ -8,7 +8,6 @@ import org.example.lib.utils.Utils;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 @Slf4j
 public class MapperImpl<T> implements Mapper<T> {
@@ -19,7 +18,7 @@ public class MapperImpl<T> implements Mapper<T> {
     }
 
     @Override
-    public T mapID(ResultSet resultSet) throws SQLException {
+    public T mapID(ResultSet resultSet) {
         try {
             T obj = cls.getDeclaredConstructor().newInstance();
             var field = AnnotationsUtils.getFieldByAnnotation(obj,Id.class);
@@ -37,7 +36,7 @@ public class MapperImpl<T> implements Mapper<T> {
     }
 
     @Override
-    public T mapRow(ResultSet resultSet) throws SQLException {
+    public T mapRow(ResultSet resultSet) {
         try {
             T obj = cls.getDeclaredConstructor().newInstance();
             for (Field field : cls.getDeclaredFields()) {

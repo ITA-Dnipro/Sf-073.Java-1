@@ -8,10 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -165,7 +162,7 @@ public class SQLUtils {
             var currType = AnnotationsUtils.getIdType(field);
             if (currType == Id.IDType.SERIAL) {
                 typeSQL = typeSQL + " AUTO_INCREMENT";
-            } else typeSQL = getNameJdbcTypeById(Types.BINARY);
+            } else typeSQL = getNameJdbcTypeById(Types.VARCHAR);
         }
         return typeSQL;
     }
@@ -212,10 +209,6 @@ public class SQLUtils {
         if (field == null) return false;
 
         return idFieldIsAutoIncrementOnDBSide(field);
-    }
-
-    public static Object generateIdForObject(Object o) {
-        return null; //to do
     }
 
     public static Object getValueForFieldFromResultSet(ResultSet resultSet, Field field) {
