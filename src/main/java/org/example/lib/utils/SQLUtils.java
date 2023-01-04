@@ -8,13 +8,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 public class SQLUtils {
@@ -68,14 +65,6 @@ public class SQLUtils {
         return currNumberOfType == null ? 0 : currNumberOfType;
     }
 
-    public static String getTypeOfIDField(Object o) {
-        var field = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
-        if (field == null) return "";
-
-        String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
-        return typeOfPKEYField.toUpperCase(Locale.ROOT);
-    }
-
     private static String getTypeForEnum(Field field) {
         Enumerated.EnumType currType = null;
         try {
@@ -112,7 +101,7 @@ public class SQLUtils {
         mapOfTypes.put(Instant.class, Types.TIMESTAMP);
         mapOfTypes.put(BigDecimal.class, Types.VARCHAR);
         mapOfTypes.put(String.class, Types.NVARCHAR);
-
+        mapOfTypes.put(UUID.class, Types.VARCHAR);
         //add types for sql.date and sql.time
         mapOfTypes.put(Date.class, Types.DATE);
         mapOfTypes.put(Time.class, Types.TIME);
@@ -147,7 +136,6 @@ public class SQLUtils {
     public static boolean idFieldIsAutoIncrementOnDBSide(Field field) {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
-        String typeSQL = getNameJdbcTypeById(intTypeSQL);
         if (intTypeSQL.equals(Types.INTEGER)
                 || intTypeSQL.equals(Types.BIGINT)) {
             var currType = AnnotationsUtils.getIdType(field);
@@ -165,18 +153,24 @@ public class SQLUtils {
             var currType = AnnotationsUtils.getIdType(field);
             if (currType == Id.IDType.SERIAL) {
                 typeSQL = typeSQL + " AUTO_INCREMENT";
-            } else typeSQL = getNameJdbcTypeById(Types.BINARY);
+            } else typeSQL = getNameJdbcTypeById(Types.VARCHAR);
         }
         return typeSQL;
     }
 
-    public static Object getValueFieldFromJavaToSQLType(Object o, Field field) {
-        var currData = Utils.getValueOfFieldForObject(o, field); //to do
+    public static Object getValueFieldFromObjectToSQLType(Object o, Field field) {
+        var currData = Utils.getValueOfFieldForObject(o, field);
         var type = field.getType();
         if (currData == null) return null;
 
+        return getValueFromJavaToSQLType(currData,type);
+    }
+
+    public static Object getValueFromJavaToSQLType(Object currData, Class<?> type) {
         if (type == BigDecimal.class) {
             return currData.toString();
+        } else if (type == UUID.class) {
+            return convertUUIDToString((UUID) currData);
         } else if (type == LocalDate.class) {
             return Date.valueOf((LocalDate) currData);
         } else if (type == Instant.class) {
@@ -189,12 +183,27 @@ public class SQLUtils {
         return currData;
     }
 
+    private static String convertUUIDToString(UUID currUUID){
+        return currUUID.toString().replaceAll("-","");
+    }
+
+    private static UUID convertStringToUUID(String currString){
+        StringBuilder sb = new StringBuilder(currString);
+        sb.insert(23,"-");
+        sb.insert(18,"-");
+        sb.insert(13,"-");
+        sb.insert(8,"-");
+        return UUID.fromString(sb.toString());
+    }
+
     private static Object getValueFieldFromSQLToJavaType(Object currData, Field field) {
         var type = field.getType();
         if (currData == null) return null;
 
         if (type == BigDecimal.class) {
             return new BigDecimal((String) currData);
+        } else if (type == UUID.class) {
+            return convertStringToUUID((String) currData);
         } else if (type == LocalDate.class) {
             return ((Date) currData).toLocalDate();
         } else if (type == Instant.class) {
@@ -214,27 +223,21 @@ public class SQLUtils {
         return idFieldIsAutoIncrementOnDBSide(field);
     }
 
-    public static Object generateIdForObject(Object o) {
-        return null; //to do
-    }
-
     public static Object getValueForFieldFromResultSet(ResultSet resultSet, Field field) {
         var columnName = AnnotationsUtils.getNameOfColumn(field);
         var type = field.getType();
         try {
-            if (type == int.class) {
+            if (type == int.class || type == Integer.class) {
                 return resultSet.getInt(columnName);
-            } else if (type == long.class) {
+            } else if (type == long.class || type == Long.class) {
                 return resultSet.getLong(columnName);
-            } else if (type == short.class) {
-                return resultSet.getShort(columnName);
-            } else if (type == byte.class) {
-                return resultSet.getByte(columnName);
-            } else if (type == float.class) {
-                return resultSet.getFloat(columnName);
-            } else if (type == double.class) {
+            } else if (type == String.class) {
+                return resultSet.getString(columnName);
+            } else if (type == UUID.class) {
+                return getValueFieldFromSQLToJavaType(resultSet.getString(columnName),field);
+            } else if (type == double.class || type == Double.class) {
                 return resultSet.getDouble(columnName);
-            } else if (type == boolean.class) {
+            } else if (type == boolean.class || type == Boolean.class) {
                 return resultSet.getBoolean(columnName);
             } else if (type == LocalDate.class || type == LocalDateTime.class) {
                 return getValueFieldFromSQLToJavaType(resultSet.getDate(columnName),field);
@@ -250,5 +253,13 @@ public class SQLUtils {
             log.error("An error while getting value for " + field.getName() + "! " + e);
         }
         return null;
+    }
+
+    public static String getSQLStringForFieldManyToOne(Field field) {
+        return "";
+    }
+
+    public static String getSQLStringForFieldOneToMany(Field field) {
+        return "";
     }
 }

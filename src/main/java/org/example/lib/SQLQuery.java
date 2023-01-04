@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 @Data
 public class SQLQuery {
@@ -21,8 +22,9 @@ public class SQLQuery {
     private List<Object> arrayOfFields;
     private String sqlTable;
     private Boolean objectHasAutoIncrementID;
-    private Object generatedID;
+    private UUID generatedID;
     private Boolean paramsIsSet;
+    private String idColumnName;
 
     public SQLQuery(Object o) {
         setParamsByObject(o);
@@ -41,12 +43,13 @@ public class SQLQuery {
         for (Field field : declaredFields) {
             String currType;
             if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
+                this.idColumnName = AnnotationsUtils.getNameOfColumn(field);
                 currType = SQLUtils.getSQLStringForIdField(field);
             } else if (field.isAnnotationPresent(ManyToOne.class)) {
-                //to do
+                currType = SQLUtils.getSQLStringForFieldManyToOne(field);
                 continue;
             } else if (field.isAnnotationPresent(OneToMany.class)) {
-                //to do
+                currType = SQLUtils.getSQLStringForFieldOneToMany(field);
                 continue;
             } else {
                 currType = SQLUtils.getSQLStringForField(field);
@@ -56,6 +59,10 @@ public class SQLQuery {
         }
         this.sqlFields = joiner.toString();
         this.paramsIsSet = true;
+    }
+
+    public void generateUUID() {
+        this.generatedID = UUID.randomUUID();
     }
 
     private void setParamsByObject(Object o) {
@@ -76,31 +83,41 @@ public class SQLQuery {
             }
             var currData = Utils.getValueOfFieldForObject(o, field);
 
-            if (!objectHasAutoIncrementID &&
-                    AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
-                currData = generatedID;
+            if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
+                this.idColumnName = AnnotationsUtils.getNameOfColumn(field);
+                continue;
             }
-            if (currData == null || (objectHasAutoIncrementID &&
-                    AnnotationsUtils.isAnnotationPresent(field, Id.class))) continue;
-
+            if (currData == null) continue;
             joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
-            arrayOfFields.add(SQLUtils.getValueFieldFromJavaToSQLType(o, field));
+            arrayOfFields.add(SQLUtils.getValueFieldFromObjectToSQLType(o, field));
             joinerDataFields.add("?");
         }
+
         this.sqlDataFields = joinerDataFields.toString();
         this.sqlFields = joinerFields.toString();
         this.paramsIsSet = true;
     }
 
     public String getInsertSQLWithParams() {
-        return "INSERT INTO " + sqlTable + " (" + sqlFields + ")" +
-                " VALUES (" + sqlDataFields + ")";
+        StringJoiner joinerFields = new StringJoiner(",");
+        StringJoiner joinerDataFields = new StringJoiner(",");
+        joinerFields.add(sqlFields);
+        joinerDataFields.add(sqlDataFields);
+
+        if (!objectHasAutoIncrementID && idColumnName != null) {
+            generateUUID();
+            joinerFields.add(idColumnName);
+            joinerDataFields.add("?");
+        }
+
+        return "INSERT INTO " + sqlTable + " (" + joinerFields+ ")" +
+                " VALUES (" + joinerDataFields + ")";
     }
 
     public String getUpdateSQLWithIdParam() {
         
         return "UPDATE " + sqlTable + " SET " + sqlFields.replaceAll(",","=?, ") +"=?"+
-                " where id = ?"; //to do check name of id field
+                " where "+idColumnName+" = ?";
     }
 
     public String getCreateTableSQL() {
@@ -109,12 +126,12 @@ public class SQLQuery {
     }
 
     public  String getSelectSQLWithParams() {
-        return "SELECT * FROM " + sqlTable + " where id = ?";
+        return "SELECT * FROM " + sqlTable + " where "+idColumnName+" = ?";
     }
 
 
     public String getDeleteSQLWithParams() {
-        return "DELETE FROM " + sqlTable + " where id = ?"; //to do check name of id field
+        return "DELETE FROM " + sqlTable + " where "+idColumnName+" = ?";
     }
 
     public String getSelectAllSQLWithParams() {

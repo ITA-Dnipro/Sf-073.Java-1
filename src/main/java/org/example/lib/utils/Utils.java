@@ -18,6 +18,15 @@ public class Utils {
     }
 
     public static ORManager getORMImplementation(String filename) {
+        var datasource = getDataSourceFromFilename(filename);
+        return ORManager.withDataSource(datasource);
+    }
+
+    public static ORManager getORMImplementation(DataSource dataSource) {
+        return new ORManagerImpl(dataSource);
+    }
+
+    public static JdbcDataSource getDataSourceFromFilename(String filename) {
         Properties prop = new Properties();
 
         try {
@@ -39,12 +48,9 @@ public class Utils {
         datasource.setUser(prop.getProperty("jdbc-username"));
         datasource.setPassword(prop.getProperty("jdbc-password"));
 
-        return ORManager.withDataSource(datasource);
+        return datasource;
     }
 
-    public static ORManager getORMImplementation(DataSource dataSource) {
-        return new ORManagerImpl(dataSource);
-    }
 
     private static String firstUpperCase(String word) {
         if (word == null || word.isEmpty()) return "";//или return word;
@@ -94,7 +100,7 @@ public class Utils {
             } else {
                 field.set(o, value);
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("An error while setting value for " + field.getName() + " class " + className + "! " + e);
         }
     }
@@ -122,7 +128,7 @@ public class Utils {
                 return field.getChar(o);
             }
             return field.get(o);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("An error while getting value for " + field.getName() + " class " + className + "! " + e);
         }
         return null;
