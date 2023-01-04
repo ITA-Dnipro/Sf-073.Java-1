@@ -110,12 +110,42 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public <T> Optional<T> findById(Serializable id, Class<T> cls) {
-        return Optional.empty();
+
+        System.out.println(AnnotationsUtils.getFieldByAnnotation(cls,Id.class));
+
+        Field idField = AnnotationsUtils.getFieldByAnnotation(cls,Id.class);
+        if (idField == null){
+            log.error("Cannot find by id for class because class "+cls.getSimpleName()+" has no Id field");
+            return Optional.empty();
+        }
+
+        SQLQuery sqlQuery = new SQLQuery(cls);
+        if (!sqlQuery.getParamsIsSet()){
+            log.error("Error reading params for sql from class "+cls.getSimpleName());
+            return Optional.empty();
+        }
+
+        String sql = sqlQuery.getSelectSQLWithParams();
+        ArrayList<Object> params = new ArrayList<>();
+        params.add(id);
+        var mapper = new MapperImpl<>(cls);
+
+        T res = repository.queryForObject(sql, params, mapper);
+        return Optional.ofNullable(res);
     }
 
     @Override
     public <T> List<T> findAll(Class<T> cls) {
-        return null;
+        SQLQuery sqlQuery = new SQLQuery(cls);
+        if (!sqlQuery.getParamsIsSet()) {
+            log.error("Error reading params for sql from class " + cls.getSimpleName());
+            return Collections.emptyList();
+        }
+
+        String sql = sqlQuery.getSelectAllSQLWithParams();
+        var mapper = new MapperImpl<>(cls);
+
+        return repository.queryForList(sql, Collections.emptyList(), mapper);
     }
 
     @Override

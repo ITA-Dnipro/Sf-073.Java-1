@@ -21,6 +21,12 @@ class Main {
         book1.setPublisher(publisher);
         ormManager.merge(book1);
 
+        System.out.println(publisher);
+
+        var found = ormManager.findById(1L,Book.class);
+        System.out.println(found.toString());
+
+
         // ...
     }
 }

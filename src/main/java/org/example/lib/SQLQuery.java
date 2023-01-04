@@ -34,6 +34,7 @@ public class SQLQuery {
         setParamsByClass(currClass);
     }
 
+
     private void setParamsByClass(Class<?> currClass) {
         if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)) return;
         this.sqlTable = AnnotationsUtils.getNameOfTable(currClass);
@@ -114,6 +115,7 @@ public class SQLQuery {
     }
 
     public String getUpdateSQLWithIdParam() {
+        
         return "UPDATE " + sqlTable + " SET " + sqlFields.replaceAll(",","=?, ") +"=?"+
                 " where "+idColumnName+" = ?";
     }
@@ -123,7 +125,16 @@ public class SQLQuery {
                 " (" + sqlFields + ")";
     }
 
+    public  String getSelectSQLWithParams() {
+        return "SELECT * FROM " + sqlTable + " where id = ?";
+    }
+
+
     public String getDeleteSQLWithParams() {
         return "DELETE FROM " + sqlTable + " where "+idColumnName+" = ?";
+    }
+
+    public String getSelectAllSQLWithParams() {
+        return "SELECT * FROM " + sqlTable ;
     }
 }
