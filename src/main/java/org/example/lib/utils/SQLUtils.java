@@ -12,6 +12,7 @@ import java.time.*;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 public class SQLUtils {
@@ -109,7 +110,7 @@ public class SQLUtils {
         mapOfTypes.put(Instant.class, Types.TIMESTAMP);
         mapOfTypes.put(BigDecimal.class, Types.VARCHAR);
         mapOfTypes.put(String.class, Types.NVARCHAR);
-
+        mapOfTypes.put(UUID.class, Types.VARCHAR);
         //add types for sql.date and sql.time
         mapOfTypes.put(Date.class, Types.DATE);
         mapOfTypes.put(Time.class, Types.TIME);
@@ -144,7 +145,6 @@ public class SQLUtils {
     public static boolean idFieldIsAutoIncrementOnDBSide(Field field) {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
-        String typeSQL = getNameJdbcTypeById(intTypeSQL);
         if (intTypeSQL.equals(Types.INTEGER)
                 || intTypeSQL.equals(Types.BIGINT)) {
             var currType = AnnotationsUtils.getIdType(field);
@@ -167,13 +167,19 @@ public class SQLUtils {
         return typeSQL;
     }
 
-    public static Object getValueFieldFromJavaToSQLType(Object o, Field field) {
-        var currData = Utils.getValueOfFieldForObject(o, field); //to do
+    public static Object getValueFieldFromObjectToSQLType(Object o, Field field) {
+        var currData = Utils.getValueOfFieldForObject(o, field);
         var type = field.getType();
         if (currData == null) return null;
 
+        return getValueFromJavaToSQLType(currData,type);
+    }
+
+    public static Object getValueFromJavaToSQLType(Object currData, Class<?> type) {
         if (type == BigDecimal.class) {
             return currData.toString();
+        } else if (type == UUID.class) {
+            return convertUUIDToString((UUID) currData);
         } else if (type == LocalDate.class) {
             return Date.valueOf((LocalDate) currData);
         } else if (type == Instant.class) {
@@ -186,12 +192,27 @@ public class SQLUtils {
         return currData;
     }
 
+    private static String convertUUIDToString(UUID currUUID){
+        return currUUID.toString().replaceAll("-","");
+    }
+
+    private static UUID convertStringToUUID(String currString){
+        StringBuffer sb = new StringBuffer(currString);
+        sb.insert(23,"-");
+        sb.insert(18,"-");
+        sb.insert(13,"-");
+        sb.insert(8,"-");
+        return UUID.fromString(sb.toString());
+    }
+
     private static Object getValueFieldFromSQLToJavaType(Object currData, Field field) {
         var type = field.getType();
         if (currData == null) return null;
 
         if (type == BigDecimal.class) {
             return new BigDecimal((String) currData);
+        } else if (type == UUID.class) {
+            return convertStringToUUID((String) currData);
         } else if (type == LocalDate.class) {
             return ((Date) currData).toLocalDate();
         } else if (type == Instant.class) {
@@ -215,19 +236,17 @@ public class SQLUtils {
         var columnName = AnnotationsUtils.getNameOfColumn(field);
         var type = field.getType();
         try {
-            if (type == int.class) {
+            if (type == int.class || type == Integer.class) {
                 return resultSet.getInt(columnName);
-            } else if (type == long.class) {
+            } else if (type == long.class || type == Long.class) {
                 return resultSet.getLong(columnName);
-            } else if (type == short.class) {
-                return resultSet.getShort(columnName);
-            } else if (type == byte.class) {
-                return resultSet.getByte(columnName);
-            } else if (type == float.class) {
-                return resultSet.getFloat(columnName);
-            } else if (type == double.class) {
+            } else if (type == String.class) {
+                return resultSet.getString(columnName);
+            } else if (type == UUID.class) {
+                return getValueFieldFromSQLToJavaType(resultSet.getString(columnName),field);
+            } else if (type == double.class || type == Double.class) {
                 return resultSet.getDouble(columnName);
-            } else if (type == boolean.class) {
+            } else if (type == boolean.class || type == Boolean.class) {
                 return resultSet.getBoolean(columnName);
             } else if (type == LocalDate.class || type == LocalDateTime.class) {
                 return getValueFieldFromSQLToJavaType(resultSet.getDate(columnName),field);

@@ -100,7 +100,7 @@ public class Utils {
             } else {
                 field.set(o, value);
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("An error while setting value for " + field.getName() + " class " + className + "! " + e);
         }
     }
@@ -128,7 +128,7 @@ public class Utils {
                 return field.getChar(o);
             }
             return field.get(o);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("An error while getting value for " + field.getName() + " class " + className + "! " + e);
         }
         return null;

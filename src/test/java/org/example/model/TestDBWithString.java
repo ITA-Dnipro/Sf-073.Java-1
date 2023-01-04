@@ -10,17 +10,17 @@ import java.util.UUID;
 
 @Entity
 @Table("testUUID")
-public class TestDBWithUUID implements TestClass, Serializable {
+public class TestDBWithString implements TestClass, Serializable {
     @Id(Id.IDType.UUID)
     @Column("id")
-    private UUID idTable;
+    private String idTable;
     private String name;
 
-    public TestDBWithUUID(String name) {
+    public TestDBWithString(String name) {
         this.name = name;
     }
 
-    public TestDBWithUUID() {
+    public TestDBWithString() {
     }
 
     @Override

@@ -22,7 +22,7 @@ public class SQLQuery {
     private List<Object> arrayOfFields;
     private String sqlTable;
     private Boolean objectHasAutoIncrementID;
-    private String generatedID;
+    private UUID generatedID;
     private Boolean paramsIsSet;
     private String idColumnName;
 
@@ -61,7 +61,7 @@ public class SQLQuery {
     }
 
     public void generateUUID() {
-        this.generatedID = UUID.randomUUID().toString();
+        this.generatedID = UUID.randomUUID();
     }
 
     private void setParamsByObject(Object o) {
@@ -88,7 +88,7 @@ public class SQLQuery {
             }
             if (currData == null) continue;
             joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
-            arrayOfFields.add(SQLUtils.getValueFieldFromJavaToSQLType(o, field));
+            arrayOfFields.add(SQLUtils.getValueFieldFromObjectToSQLType(o, field));
             joinerDataFields.add("?");
         }
 
@@ -109,8 +109,8 @@ public class SQLQuery {
             joinerDataFields.add("?");
         }
 
-        return "INSERT INTO " + sqlTable + " (" + joinerFields.toString() + ")" +
-                " VALUES (" + joinerDataFields.toString() + ")";
+        return "INSERT INTO " + sqlTable + " (" + joinerFields+ ")" +
+                " VALUES (" + joinerDataFields + ")";
     }
 
     public String getUpdateSQLWithIdParam() {
