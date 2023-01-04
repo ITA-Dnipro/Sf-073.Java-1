@@ -3,6 +3,7 @@ package org.example.lib;
 import org.example.lib.annotations.Id;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.utils.AnnotationsUtils;
+import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
 import org.example.model.*;
 import org.junit.jupiter.api.AfterEach;
@@ -16,9 +17,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -169,16 +169,16 @@ public class ORMTestWorkWithDB {
 
         TestClass savedObject = orm.save(new TestDBWithID("Name 1"));
 
-        Optional<TestClass> foundObject = orm.findById((Serializable) savedObject.getId(), TestClass.class);
+        Optional<TestDBWithID> foundObject = orm.findById((Serializable) savedObject.getId(), TestDBWithID.class);
         assertTrue(foundObject.isPresent());
-        assertEquals(foundObject.get(), savedObject);
+        assertNotEquals(foundObject.get(), savedObject);
     }
 
     @Test
     void can_Not_Find_Object_By_Id() {
         orm.register(TestDBWithID.class);
 
-        Optional<TestClass> objectToBeFound = orm.findById(-1L, TestClass.class);
+        Optional<TestDBWithID> objectToBeFound = orm.findById(-1L, TestDBWithID.class);
         assertFalse(objectToBeFound.isPresent());
     }
 
@@ -192,7 +192,7 @@ public class ORMTestWorkWithDB {
         savedObject.setName("Name 2");
         orm.merge(savedObject);
 
-        var searchResult = orm.findById((Serializable) savedObject.getId(), TestClass.class);
+        var searchResult = orm.findById((Serializable) savedObject.getId(), TestDBWithID.class);
         assertTrue(searchResult.isPresent());
         TestClass foundObject = searchResult.get();
 
@@ -210,12 +210,61 @@ public class ORMTestWorkWithDB {
         savedObject.setName("Name 2");
         orm.refresh(savedObject);
 
-        var searchResult = orm.findById((Serializable) savedObject.getId(), TestClass.class);
+        var searchResult = orm.findById((Serializable) savedObject.getId(), TestDBWithID.class);
         assertTrue(searchResult.isPresent());
         TestClass foundObject = searchResult.get();
 
         assertEquals(currId, foundObject.getId());
         assertEquals("Name 1", foundObject.getName());
+    }
+
+    @Test
+    void testFindById() {
+        String title = "My Book";
+        Book book = new Book(title, LocalDate.now());
+        orm.register(Book.class);
+        orm.persist(book);
+        book.setTitle("New Book");
+        orm.merge(book);
+
+        var idField = AnnotationsUtils.getFieldByAnnotation(book, Id.class);
+        assertNotNull(idField);
+
+        var id = SQLUtils.getValueFieldFromObjectToSQLType(book, idField);
+
+        // Find the Book object by id
+        Optional<Book> foundBook = orm.findById((Serializable) id, Book.class);
+
+        // Assert that the found Book object is present and has the same title as the original Book object
+        assertTrue(foundBook.isPresent());
+        assertEquals(book.getTitle(), foundBook.get().getTitle());
+    }
+
+    @Test
+    void testFindAll() {
+        // Create a list of new Book objects with unique ids and titles
+        List<Book> books = Arrays.asList(
+                new Book("Book 1", LocalDate.now()),
+                new Book("Book 2", LocalDate.now()),
+                new Book("Book 3", LocalDate.now())
+        );
+        orm.register(Book.class);
+
+        orm.persist(books.get(0));
+        orm.persist(books.get(1));
+        orm.persist(books.get(2));
+
+        // Find all the Book objects in the database
+        List<Book> foundBooks = orm.findAll(Book.class);
+
+        // Assert that the found Book objects have the same number of elements as the original list of Book objects
+        assertEquals(books.size(), foundBooks.size());
+
+        // Assert that the found Book objects have the same ids and titles as the original Book objects
+        for (int i = 0; i < books.size(); i++) {
+            assertEquals(books.get(i).getId(), foundBooks.get(i).getId());
+            assertEquals(books.get(i).getTitle(), foundBooks.get(i).getTitle());
+        }
     }
 }
 

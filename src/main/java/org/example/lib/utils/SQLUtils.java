@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.*;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -64,14 +63,6 @@ public class SQLUtils {
         var mapOfTypes = getMapTypesForSQL();
         var currNumberOfType = mapOfTypes.get(type);
         return currNumberOfType == null ? 0 : currNumberOfType;
-    }
-
-    public static String getTypeOfIDField(Object o) {
-        var field = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
-        if (field == null) return "";
-
-        String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
-        return typeOfPKEYField.toUpperCase(Locale.ROOT);
     }
 
     private static String getTypeForEnum(Field field) {
@@ -197,7 +188,7 @@ public class SQLUtils {
     }
 
     private static UUID convertStringToUUID(String currString){
-        StringBuffer sb = new StringBuffer(currString);
+        StringBuilder sb = new StringBuilder(currString);
         sb.insert(23,"-");
         sb.insert(18,"-");
         sb.insert(13,"-");
@@ -262,5 +253,13 @@ public class SQLUtils {
             log.error("An error while getting value for " + field.getName() + "! " + e);
         }
         return null;
+    }
+
+    public static String getSQLStringForFieldManyToOne(Field field) {
+        return "";
+    }
+
+    public static String getSQLStringForFieldOneToMany(Field field) {
+        return "";
     }
 }

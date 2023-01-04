@@ -46,10 +46,10 @@ public class SQLQuery {
                 this.idColumnName = AnnotationsUtils.getNameOfColumn(field);
                 currType = SQLUtils.getSQLStringForIdField(field);
             } else if (field.isAnnotationPresent(ManyToOne.class)) {
-                //to do
+                currType = SQLUtils.getSQLStringForFieldManyToOne(field);
                 continue;
             } else if (field.isAnnotationPresent(OneToMany.class)) {
-                //to do
+                currType = SQLUtils.getSQLStringForFieldOneToMany(field);
                 continue;
             } else {
                 currType = SQLUtils.getSQLStringForField(field);
@@ -126,7 +126,7 @@ public class SQLQuery {
     }
 
     public  String getSelectSQLWithParams() {
-        return "SELECT * FROM " + sqlTable + " where id = ?";
+        return "SELECT * FROM " + sqlTable + " where "+idColumnName+" = ?";
     }
 
 
