@@ -2,18 +2,11 @@ package org.example.lib;
 
 import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.utils.Utils;
-import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.stream.Stream;
 
 // 1st part

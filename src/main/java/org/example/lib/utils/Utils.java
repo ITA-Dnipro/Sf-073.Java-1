@@ -4,11 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
-import org.example.lib.service.Mapper;
-import org.example.lib.service.MapperImpl;
-import org.example.lib.service.MapperType;
-import org.example.model.Book;
-import org.example.model.Publisher;
 import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
@@ -23,6 +18,15 @@ public class Utils {
     }
 
     public static ORManager getORMImplementation(String filename) {
+        var datasource = getDataSourceFromFilename(filename);
+        return ORManager.withDataSource(datasource);
+    }
+
+    public static ORManager getORMImplementation(DataSource dataSource) {
+        return new ORManagerImpl(dataSource);
+    }
+
+    public static JdbcDataSource getDataSourceFromFilename(String filename) {
         Properties prop = new Properties();
 
         try {
@@ -30,7 +34,7 @@ public class Utils {
                     .getResourceAsStream(filename);
             prop.load(input);
         } catch (IOException e) {
-            log.error("Error reading file "+filename+": "+e.getMessage());
+            log.error("Error reading file "+filename+": "+e);
             System.exit(0);
         }
 
@@ -44,12 +48,9 @@ public class Utils {
         datasource.setUser(prop.getProperty("jdbc-username"));
         datasource.setPassword(prop.getProperty("jdbc-password"));
 
-        return ORManager.withDataSource(datasource);
+        return datasource;
     }
 
-    public static ORManager getORMImplementation(DataSource dataSource) {
-        return new ORManagerImpl(dataSource);
-    }
 
     private static String firstUpperCase(String word) {
         if (word == null || word.isEmpty()) return "";//или return word;
@@ -99,7 +100,7 @@ public class Utils {
             } else {
                 field.set(o, value);
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("An error while setting value for " + field.getName() + " class " + className + "! " + e);
         }
     }
@@ -127,7 +128,7 @@ public class Utils {
                 return field.getChar(o);
             }
             return field.get(o);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("An error while getting value for " + field.getName() + " class " + className + "! " + e);
         }
         return null;

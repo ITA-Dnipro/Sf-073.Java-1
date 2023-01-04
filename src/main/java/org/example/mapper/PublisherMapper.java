@@ -24,15 +24,4 @@ public class PublisherMapper implements Mapper<Publisher>  {
         //currPub.setBooks(resultSet.getDate("published_at").toLocalDate());
         return currPub;
     }
-
-    @Override
-    public List<Publisher> mapRows(ResultSet resultSet) throws SQLException {
-        List<Publisher> pubList = new ArrayList<>();
-
-        while(resultSet.next()){
-            pubList.add(mapRow(resultSet));
-        }
-
-        return pubList;
-    }
 }

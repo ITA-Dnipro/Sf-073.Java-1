@@ -4,6 +4,7 @@ import org.example.lib.annotations.Column;
 import org.example.lib.annotations.Enumerated;
 import org.example.lib.annotations.Id;
 import org.example.lib.annotations.Table;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
@@ -47,9 +48,12 @@ public class AnnotationsUtils {
         return fld.value();
     }
 
-    public static Field getFieldByAnnotation(Object o,Class<? extends Annotation> AnnotationClass) {
-        var currClass = o.getClass();
-        Field[] declaredFields = currClass.getDeclaredFields();
+    public static Field getFieldByAnnotation(Object o, Class<? extends Annotation> AnnotationClass) {
+        return getFieldByAnnotation(o.getClass(), AnnotationClass);
+    }
+
+    public static <T> Field getFieldByAnnotation(Class<T> o, Class<? extends Annotation> AnnotationClass) {
+        Field[] declaredFields = o.getDeclaredFields();
         for (Field field : declaredFields) {
             if (AnnotationsUtils.isAnnotationPresent(field,AnnotationClass)) {
                 return field;
