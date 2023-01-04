@@ -229,4 +229,12 @@ public class ORManagerImpl implements ORManager {
 
         return status;
     }
+
+    @Override
+    public long getCount(Object o) {
+        SQLQuery sqlQuery = new SQLQuery(o);
+        String sql = sqlQuery.getCountSQL();
+
+        return repository.count(sql);
+    }
 }

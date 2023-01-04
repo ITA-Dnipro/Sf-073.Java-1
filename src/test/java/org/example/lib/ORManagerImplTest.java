@@ -271,8 +271,9 @@ public class ORManagerImplTest {
 
     @Test
     void given_book_when_persisted_then_book_saved_to_database() {
+        var bookOne = new Book("Lotr", LocalDate.of(1961, 1, 1));
 
-        orManager.persist(bookOne);
+        orm.persist(bookOne);
 
         assertThat(bookOne.getId()).isGreaterThan(0);
         assertThat(bookOne.getPublishedAt()).isEqualTo(LocalDate.of(1961, 1, 1));
@@ -281,18 +282,23 @@ public class ORManagerImplTest {
 
     @Test
     void given_two_books_when_persisted_then_books_saved_to_database() {
-        orManager.persist(bookOne);
-        orManager.persist(bookTwo);
+        var bookOne = new Book("Book 1", LocalDate.now());
+        var bookTwo = new Book("Book 2", LocalDate.now());
+
+        orm.persist(bookOne);
+        orm.persist(bookTwo);
 
         assertThat(bookOne.getId()).isNotEqualTo(bookTwo.getId());
     }
 
     @Test
     void given_the_same_book_twice_when_persisted_then_book_not_saved_custom_exception_thrown() {
-        orManager.persist(bookOne);
+        var bookOne = new Book("Book 1", LocalDate.now());
+
+        orm.persist(bookOne);
         Exception exception = assertThrows(
                 ObjectAlreadyExistException.class,
-                () -> orManager.persist(bookOne)
+                () -> orm.persist(bookOne)
         );
 
         assertEquals("Try to persist an existing object. Object " + bookOne + " already exist in database!", exception.getMessage());
@@ -300,32 +306,37 @@ public class ORManagerImplTest {
 
     @Test
     void given_book_id_when_delete_then_remove_from_database() {
-        boolean res = orManager.delete(bookOne);
-
+        var bookOne = new Book("Book 1", LocalDate.now());
+        orm.persist(bookOne);
+        boolean res = orm.delete(bookOne);
         assertTrue(res);
     }
 
     @Test
     void given_book_id_null_when_delete_then_error() {
+        var bookOne = new Book("Book 1", LocalDate.now());
+
         bookOne.setId(null);
 
-        boolean res = orManager.delete(bookOne);
+        boolean res = orm.delete(bookOne);
 
         assertFalse(res);
     }
 
     @Test
     void given_multiple_books_when_delete_then_remove_from_database() {
+        var bookOne = new Book("Book 1", LocalDate.now());
+        var bookTwo = new Book("Book 2", LocalDate.now());
 
-        orManager.persist(bookOne);
-        orManager.persist(bookTwo);
+        orm.persist(bookOne);
+        orm.persist(bookTwo);
 
         int numberOfDeletions = 2;
 
-        var startCount = orManager.getCount(bookOne);
-        orManager.delete(bookOne);
-        orManager.delete(bookTwo);
-        var endCount = orManager.getCount(bookOne);
+        var startCount = orm.getCount(bookOne);
+        orm.delete(bookOne);
+        orm.delete(bookTwo);
+        var endCount = orm.getCount(bookOne);
 
 
         assertThat(endCount).isEqualTo(startCount - numberOfDeletions);
