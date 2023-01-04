@@ -1,5 +1,7 @@
 package org.example.lib;
 
+import org.assertj.db.type.Table;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.example.lib.annotations.Id;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.utils.AnnotationsUtils;
@@ -266,5 +268,68 @@ public class ORManagerImplTest {
             assertEquals(books.get(i).getTitle(), foundBooks.get(i).getTitle());
         }
     }
+
+    @Test
+    void given_book_when_persisted_then_book_saved_to_database() {
+
+        orManager.persist(bookOne);
+
+        assertThat(bookOne.getId()).isGreaterThan(0);
+        assertThat(bookOne.getPublishedAt()).isEqualTo(LocalDate.of(1961, 1, 1));
+        assertThat(bookOne.getTitle()).isEqualTo("Lotr");
+    }
+
+    @Test
+    void given_two_books_when_persisted_then_books_saved_to_database() {
+        orManager.persist(bookOne);
+        orManager.persist(bookTwo);
+
+        assertThat(bookOne.getId()).isNotEqualTo(bookTwo.getId());
+    }
+
+    @Test
+    void given_the_same_book_twice_when_persisted_then_book_not_saved_custom_exception_thrown() {
+        orManager.persist(bookOne);
+        Exception exception = assertThrows(
+                ObjectAlreadyExistException.class,
+                () -> orManager.persist(bookOne)
+        );
+
+        assertEquals("Try to persist an existing object. Object " + bookOne + " already exist in database!", exception.getMessage());
+    }
+
+    @Test
+    void given_book_id_when_delete_then_remove_from_database() {
+        boolean res = orManager.delete(bookOne);
+
+        assertTrue(res);
+    }
+
+    @Test
+    void given_book_id_null_when_delete_then_error() {
+        bookOne.setId(null);
+
+        boolean res = orManager.delete(bookOne);
+
+        assertFalse(res);
+    }
+
+    @Test
+    void given_multiple_books_when_delete_then_remove_from_database() {
+
+        orManager.persist(bookOne);
+        orManager.persist(bookTwo);
+
+        int numberOfDeletions = 2;
+
+        var startCount = orManager.getCount(bookOne);
+        orManager.delete(bookOne);
+        orManager.delete(bookTwo);
+        var endCount = orManager.getCount(bookOne);
+
+
+        assertThat(endCount).isEqualTo(startCount - numberOfDeletions);
+    }
+
 }
 

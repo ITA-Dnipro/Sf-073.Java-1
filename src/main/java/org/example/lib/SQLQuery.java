@@ -125,10 +125,13 @@ public class SQLQuery {
                 " (" + sqlFields + ")";
     }
 
+    public String getCountSQL() {
+        return "SELECT COUNT(*) FROM " + sqlTable;
+    }
+
     public  String getSelectSQLWithParams() {
         return "SELECT * FROM " + sqlTable + " where "+idColumnName+" = ?";
     }
-
 
     public String getDeleteSQLWithParams() {
         return "DELETE FROM " + sqlTable + " where "+idColumnName+" = ?";
