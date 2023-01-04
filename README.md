@@ -1,7 +1,8 @@
 "# Sf-073.Java-1"
 
-Demo project for Object-Relational Mapping Manager - a simple library that can work with H2 database as ORM
-Opportunities of ORM:
+Demo project for Object-Relational Mapping Manager - a simple library that can work with H2 database as ORM. 
+
+Main opportunities of ORM:
 
 1. Creating tables in DB relying on the structure of the java class
 2. Adding (persist and save) java objects to DB
