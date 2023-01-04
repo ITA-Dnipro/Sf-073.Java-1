@@ -22,7 +22,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ORMTestWorkWithDB {
+public class ORManagerImplTest {
     private ORManager orm;
     private String propertiesFileName;
 

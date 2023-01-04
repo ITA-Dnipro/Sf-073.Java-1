@@ -110,9 +110,6 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public <T> Optional<T> findById(Serializable id, Class<T> cls) {
-
-        System.out.println(AnnotationsUtils.getFieldByAnnotation(cls,Id.class));
-
         Field idField = AnnotationsUtils.getFieldByAnnotation(cls,Id.class);
         if (idField == null){
             log.error("Cannot find by id for class because class "+cls.getSimpleName()+" has no Id field");
