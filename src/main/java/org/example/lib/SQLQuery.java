@@ -107,6 +107,10 @@ public class SQLQuery {
                 " (" + sqlFields + ")";
     }
 
+    public String getCountSQL() {
+        return "SELECT COUNT(*) FROM " + sqlTable;
+    }
+
     public String getDeleteSQLWithParams() {
         return "DELETE FROM " + sqlTable + " where id = ?";
     }

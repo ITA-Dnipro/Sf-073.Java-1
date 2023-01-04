@@ -28,12 +28,13 @@ public class Repository {
             return false;
         }
     }
+
     public boolean update(String sql, List<Object> params) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             log.info(sql);
             setParametersForPrepareStatement(pstmt, params);
-            return pstmt.executeUpdate()>0;
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException se) {
             //Handle errors for JDBC
             log.error("An error while update object DB " + se.getMessage());
@@ -41,9 +42,9 @@ public class Repository {
         return false;
     }
 
-    public <T> T updateAndGetObjectWithID(String sql, List<Object> params,Mapper<T> mapper) {
+    public <T> T updateAndGetObjectWithID(String sql, List<Object> params, Mapper<T> mapper) {
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql,PreparedStatement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             log.info(sql);
             setParametersForPrepareStatement(pstmt, params);
             int affectedRows = pstmt.executeUpdate();
@@ -53,8 +54,7 @@ public class Repository {
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     return mapper.mapID(generatedKeys);
-                }
-                else {
+                } else {
                     throw new SQLException("Updating object failed, no ID obtained.");
                 }
             }
@@ -120,4 +120,17 @@ public class Repository {
         }
     }
 
+    public long count(String sql){
+        long count = 0;
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
 }
