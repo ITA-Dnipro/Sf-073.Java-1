@@ -1,6 +1,5 @@
 package org.example.lib;
 
-import org.assertj.db.type.Table;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.example.lib.annotations.Id;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
@@ -270,23 +269,23 @@ public class ORManagerImplTest {
     }
 
     @Test
-    void given_book_when_persisted_then_book_saved_to_database() {
-        var bookOne = new Book("Lotr", LocalDate.of(1961, 1, 1));
+    void given_book_when_save_then_book_saved_to_database() {
+        var bookOne = new Book("LOTR", LocalDate.of(1961, 1, 1));
 
-        orm.persist(bookOne);
+        orm.save(bookOne);
 
         assertThat(bookOne.getId()).isGreaterThan(0);
         assertThat(bookOne.getPublishedAt()).isEqualTo(LocalDate.of(1961, 1, 1));
-        assertThat(bookOne.getTitle()).isEqualTo("Lotr");
+        assertThat(bookOne.getTitle()).isEqualTo("LOTR");
     }
 
     @Test
-    void given_two_books_when_persisted_then_books_saved_to_database() {
+    void given_two_books_when_save_then_books_saved_to_database() {
         var bookOne = new Book("Book 1", LocalDate.now());
         var bookTwo = new Book("Book 2", LocalDate.now());
 
-        orm.persist(bookOne);
-        orm.persist(bookTwo);
+        orm.save(bookOne);
+        orm.save(bookTwo);
 
         assertThat(bookOne.getId()).isNotEqualTo(bookTwo.getId());
     }
