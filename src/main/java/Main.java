@@ -1,3 +1,4 @@
+import org.example.lib.utils.Utils;
 import org.example.model.Book;
 import org.example.lib.ORManager;
 import org.example.model.Publisher;
@@ -7,7 +8,7 @@ import java.time.LocalDate;
 class Main {
     public static void main(String[] args) {
         String propertiesFilename = "db.properties";
-        ORManager ormManager = ORManager.withPropertiesFrom(
+        ORManager ormManager = Utils.getORMImplementation(
                 propertiesFilename
         );
         ormManager.register(Book.class, Publisher.class);

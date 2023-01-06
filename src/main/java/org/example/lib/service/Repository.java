@@ -30,9 +30,9 @@ public class Repository {
     }
 
     public boolean update(String sql, List<Object> params) {
+        log.info(sql);
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            log.info(sql);
             setParametersForPrepareStatement(pstmt, params);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException se) {
@@ -43,9 +43,9 @@ public class Repository {
     }
 
     public <T> T updateAndGetObjectWithID(String sql, List<Object> params, Mapper<T> mapper) {
+        log.info(sql);
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            log.info(sql);
             setParametersForPrepareStatement(pstmt, params);
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
@@ -78,9 +78,9 @@ public class Repository {
     }
 
     public <T> T queryForObject(String sql, List<Object> params, Mapper<T> mapper) {
+        log.info(sql);
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            log.info(sql);
             setParametersForPrepareStatement(pstmt, params);
             ResultSet resultSet = pstmt.executeQuery();
 
@@ -95,6 +95,7 @@ public class Repository {
     }
 
     public <T> List<T> queryForList(String sql, List<Object> params, Mapper<T> mapper) {
+        log.info(sql);
         List<T> objectList = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

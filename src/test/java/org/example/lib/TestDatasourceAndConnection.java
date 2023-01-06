@@ -1,20 +1,11 @@
 package org.example.lib;
 
 
+import org.example.lib.exceptions.IncorrectPropertiesFileException;
 import org.example.lib.utils.Utils;
-import org.example.model.Book;
 import org.h2.jdbcx.JdbcDataSource;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDate;
-import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,9 +21,8 @@ class TestDatasourceAndConnection {
     @Test
     void given_fileName_ORMangerWithPropertiesFrom_then_connect() {
 
-        String fileName = propertiesFileName;
         // load properties from file
-        ORManager orm = ORManager.withPropertiesFrom(fileName);
+        ORManager orm = Utils.getORMImplementation(propertiesFileName);
 
         // make sure the connection is valid
         assertTrue(orm.checkConnectionToDB());
@@ -56,14 +46,27 @@ class TestDatasourceAndConnection {
     @Test
     void given_empty_fileName_ORMangerWithPropertiesFrom_then_connection_invalid() {
         // empty file name
+        String fileName = "db_empty.properties";
+        var status = false;
+        try {
+            Utils.getORMImplementation(fileName);
+        } catch(IncorrectPropertiesFileException e){
+            status = true;
+        }
+
+        assertTrue(status);
+    }
+
+
+    @Test
+    void given_empty_fileProperties_ORMangerWithPropertiesFrom_then_Exception() {
         String fileName = "";
 
-        ORManager orm = ORManager.withPropertiesFrom(fileName);
+        ORManager orm = Utils.getORMImplementation(fileName);
 
         assertThrows(NullPointerException.class,
                 orm::checkConnectionToDB);
     }
-
 
     @Test
     void given_empty_datasource_when_getORMImplementation_then_connection_invalid() {

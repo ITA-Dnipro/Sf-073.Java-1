@@ -13,6 +13,7 @@ import org.example.lib.utils.Utils;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -31,13 +32,55 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public void register(Class... entityClasses) {
+        var classesToRegister = new HashSet<Class>();
         for (Class currClass : entityClasses) {
-            SQLQuery sql = new SQLQuery(currClass);
-            if (sql.getParamsIsSet()) {
-                repository.update(sql.getCreateTableSQL());
-            } else {
-                log.error("Error creating sql query for class " + currClass.getSimpleName() + " cannot set parameters by class!");
+            if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)){
+                //to do exception
+                continue;
             }
+            classesToRegister.add(currClass);
+        }
+
+        var registeredClasses = registerClassWithReferences(classesToRegister);
+
+        for (Class currClass : classesToRegister) {
+            if (registeredClasses.contains(currClass)){
+                continue;
+            }
+            registerClassInDB(currClass);
+        }
+    }
+
+    private HashSet<Class> registerClassWithReferences(HashSet<Class> classesToRegister) {
+        var registeredClasses = new HashSet<Class>();
+
+        for (Class currClass : classesToRegister) {
+            var field = AnnotationsUtils.getFieldByAnnotation(currClass,ManyToOne.class);
+            if (field == null){
+                continue;
+            }
+            var typeClass = field.getType();
+            if (!classesToRegister.contains(typeClass)){
+                //to do exception
+                continue;
+            }
+            var fieldId = AnnotationsUtils.getFieldByAnnotation(typeClass,Id.class);
+            if (fieldId == null){
+                //to do exception
+                continue;
+            }
+            registerClassInDB(typeClass);
+            registeredClasses.add(typeClass);
+        }
+        return registeredClasses;
+    }
+
+    private void registerClassInDB(Class currClass) {
+        SQLQuery sql = new SQLQuery(currClass);
+        if (sql.getParamsIsSet()) {
+            repository.update(sql.getCreateTableSQL());
+        } else {
+            log.error("Error creating sql query for class " + currClass.getSimpleName() + " cannot set parameters by class!");
         }
     }
 
@@ -98,6 +141,7 @@ public class ORManagerImpl implements ORManager {
     private <T> boolean insertObjectWithAutoIncrementToDatabase(SQLQuery sqlQuery, T o) {
         Field idField = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
         if (idField == null) return false;
+
         var arrayOfFields = sqlQuery.getArrayOfFields();
         Mapper<T> mapper = new MapperImpl(o.getClass());
         var objectWithId = repository.updateAndGetObjectWithID(sqlQuery.getInsertSQLWithParams(), arrayOfFields, mapper);
@@ -106,6 +150,7 @@ public class ORManagerImpl implements ORManager {
         }
         Utils.copyValueOfFieldForObject(o, objectWithId, idField);
         return true;
+
     }
 
     @Override

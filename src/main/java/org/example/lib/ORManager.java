@@ -28,18 +28,6 @@ public interface ORManager {
     // - Enum +                           (OPTIONAL)
     //   @Enumerated(Enumerated.EnumType.ORDINAL/Enumerated.EnumType.STRING)
 
-    // initialize connection factory for the DB
-    // read the jdbc url, username and password from
-    //  the given property file
-    static ORManager withPropertiesFrom(String filename) {
-        return Utils.getORMImplementation(filename);
-    }
-
-    // initialize connection factory for the DB based on the DataSource
-    static ORManager withDataSource(DataSource dataSource) {
-        return Utils.getORMImplementation(dataSource);
-    }
-
     boolean checkConnectionToDB();
 
     // generate the schema in the DB

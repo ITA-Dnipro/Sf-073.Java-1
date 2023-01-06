@@ -34,22 +34,22 @@ public class SQLQuery {
         setParamsByClass(currClass);
     }
 
-
     private void setParamsByClass(Class<?> currClass) {
         if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)) return;
         this.sqlTable = AnnotationsUtils.getNameOfTable(currClass);
         Field[] declaredFields = currClass.getDeclaredFields();
         StringJoiner joiner = new StringJoiner(",");
+        var arrayFieldsWithFK = new ArrayList<Field>();
+
         for (Field field : declaredFields) {
             String currType;
             if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
                 this.idColumnName = AnnotationsUtils.getNameOfColumn(field);
                 currType = SQLUtils.getSQLStringForIdField(field);
-            } else if (field.isAnnotationPresent(ManyToOne.class)) {
+            } else if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)) {
                 currType = SQLUtils.getSQLStringForFieldManyToOne(field);
-                continue;
-            } else if (field.isAnnotationPresent(OneToMany.class)) {
-                currType = SQLUtils.getSQLStringForFieldOneToMany(field);
+                arrayFieldsWithFK.add(field);
+            } else if (AnnotationsUtils.isAnnotationPresent(field,OneToMany.class)) {
                 continue;
             } else {
                 currType = SQLUtils.getSQLStringForField(field);
@@ -57,6 +57,13 @@ public class SQLQuery {
             if (currType.isEmpty()) continue;
             joiner.add(currType);
         }
+
+        for (Field fieldFk:arrayFieldsWithFK) {
+            String currFk = SQLUtils.getSQLStringForForeignKey(fieldFk);
+            if (currFk.isEmpty()) continue;
+            joiner.add(currFk);
+        }
+
         this.sqlFields = joiner.toString();
         this.paramsIsSet = true;
     }
@@ -77,10 +84,20 @@ public class SQLQuery {
         this.arrayOfFields = new ArrayList<>(declaredFields.length);
 
         for (Field field : declaredFields) {
-            if (AnnotationsUtils.isAnnotationPresent(field, ManyToOne.class)
-                    || AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)) {
+            if (AnnotationsUtils.isAnnotationPresent(field, ManyToOne.class)) {
+                var currRef = Utils.getValueOfFieldForObject(o, field);
+                if (currRef == null) continue;
+                joinerFields.add(AnnotationsUtils.getNameOfColumn(field));
+                var fieldId = AnnotationsUtils.getFieldByAnnotation(currRef,Id.class);
+                arrayOfFields.add(SQLUtils.getValueFieldFromObjectToSQLType(currRef, fieldId));
+                joinerDataFields.add("?");
+                continue;
+            }
+
+            if (AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)) {
                 continue;//to do
             }
+
             var currData = Utils.getValueOfFieldForObject(o, field);
 
             if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {

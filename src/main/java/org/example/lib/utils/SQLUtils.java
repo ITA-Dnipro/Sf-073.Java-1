@@ -1,6 +1,7 @@
 package org.example.lib.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.lib.annotations.Entity;
 import org.example.lib.annotations.Enumerated;
 import org.example.lib.annotations.Id;
 
@@ -28,7 +29,7 @@ public class SQLUtils {
         String typeOfField = SQLUtils.getTypeOfFieldSQL(field);
 
         if (typeOfField == null) {
-            return nameOfField;
+            return nameOfField; //to do exception
         }
 
         return nameOfField +
@@ -54,7 +55,7 @@ public class SQLUtils {
     private static String getJDBCType(Class<?> type) {
         int intTypeSQL = getJDBCTypeNumber(type);
         if (intTypeSQL == 0) {
-            return "";
+            return ""; //to do exception
         }
         return getNameJdbcTypeById(intTypeSQL);
     }
@@ -153,7 +154,7 @@ public class SQLUtils {
             var currType = AnnotationsUtils.getIdType(field);
             if (currType == Id.IDType.SERIAL) {
                 typeSQL = typeSQL + " AUTO_INCREMENT";
-            } else typeSQL = getNameJdbcTypeById(Types.VARCHAR);
+            } else typeSQL = getNameJdbcTypeById(Types.VARCHAR); //to do exception incorrect type of ID
         }
         return typeSQL;
     }
@@ -256,7 +257,40 @@ public class SQLUtils {
     }
 
     public static String getSQLStringForFieldManyToOne(Field field) {
-        return "";
+        var type = field.getType();
+        var fieldId = AnnotationsUtils.getFieldByAnnotation(type,Id.class);
+        if (fieldId == null){
+            //to do exception
+            return "";
+        }
+
+        String nameOfField = AnnotationsUtils.getNameOfColumn(field);
+        String typeOfField = SQLUtils.getTypeOfFieldSQL(fieldId);
+
+        if (typeOfField == null) {
+            return nameOfField; // to do exception
+        }
+
+        return nameOfField +
+                " " + typeOfField;
+    }
+
+    public static String getSQLStringForForeignKey(Field field){
+        var type = field.getType();
+        var fieldId = AnnotationsUtils.getFieldByAnnotation(type,Id.class);
+        if (fieldId == null){
+            //to do exception
+            return "";
+        }
+        if (!AnnotationsUtils.isAnnotationPresent(type, Entity.class)){
+            //to do exception
+        }
+
+        String nameOfField = AnnotationsUtils.getNameOfColumn(field);
+        String nameOfFieldId = AnnotationsUtils.getNameOfColumn(fieldId);
+        String nameOfTable = AnnotationsUtils.getNameOfTable(type);
+
+        return "FOREIGN KEY ("+nameOfField+") references "+nameOfTable+"("+nameOfFieldId+")";
     }
 
     public static String getSQLStringForFieldOneToMany(Field field) {

@@ -4,29 +4,36 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lib.ORManager;
 import org.example.lib.ORManagerImpl;
 import org.example.lib.annotations.Id;
+import org.example.lib.annotations.ManyToOne;
+import org.example.lib.annotations.OneToMany;
+import org.example.lib.exceptions.IncorrectPropertiesFileException;
 import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Properties;
 
 @Slf4j
 public class Utils {
+    private static ORManager orm;
+
     private Utils() {
     }
 
-    public static ORManager getORMImplementation(String filename) {
+    public static ORManager getORMImplementation(String filename) throws IncorrectPropertiesFileException {
         var datasource = getDataSourceFromFilename(filename);
-        return ORManager.withDataSource(datasource);
+        return getORMImplementation(datasource);
     }
 
     public static ORManager getORMImplementation(DataSource dataSource) {
-        return new ORManagerImpl(dataSource);
+        orm = new ORManagerImpl(dataSource);
+        return orm;
     }
 
-    public static JdbcDataSource getDataSourceFromFilename(String filename) {
+    public static JdbcDataSource getDataSourceFromFilename(String filename) throws IncorrectPropertiesFileException {
         Properties prop = new Properties();
 
         try {
@@ -34,13 +41,15 @@ public class Utils {
                     .getResourceAsStream(filename);
             prop.load(input);
         } catch (IOException e) {
-            log.error("Error reading file "+filename+": "+e);
-            System.exit(0);
+            var message = "Error reading file "+filename+": "+e;
+            log.error(message);
+            throw new IncorrectPropertiesFileException(message);
         }
 
         if (prop.isEmpty()){
-            log.error("Error reading file "+filename+": property is empty!");
-            System.exit(0);
+            var message = "Error reading file "+filename+": property is empty!";
+            log.error(message);
+            throw new IncorrectPropertiesFileException(message);
         }
 
         JdbcDataSource datasource = new JdbcDataSource();
@@ -49,12 +58,6 @@ public class Utils {
         datasource.setPassword(prop.getProperty("jdbc-password"));
 
         return datasource;
-    }
-
-
-    private static String firstUpperCase(String word) {
-        if (word == null || word.isEmpty()) return "";//или return word;
-        return word.substring(0, 1).toUpperCase() + word.substring(1);
     }
 
     public static <T> void copyFieldsOfObject(T o, Object objFrom) {
@@ -77,9 +80,24 @@ public class Utils {
     }
 
     public static void setValueOfFieldForObject(Object o, Field field, Object value) {
-        var className = o.getClass().getSimpleName();
         field.setAccessible(true);
         var type = field.getType();
+            if (AnnotationsUtils.isAnnotationPresent(field, ManyToOne.class)){
+                var currRef = orm.findById((Serializable) value,type) ;
+                if (currRef.isPresent()){
+                    value = currRef.get();
+                } else{
+                    log.error("An error while setting value for " + field.getName() + " can not find reference for "+type);
+                }
+            }
+            if (AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)){
+              return; //to do
+            }
+       setValueOfFieldForObjectByType(o,field,type,value);
+    }
+
+    private static void setValueOfFieldForObjectByType(Object o, Field field, Class<?> type, Object value) {
+        var className = o.getClass().getSimpleName();
         try {
             if (type == int.class) {
                 field.setInt(o, (int) value);
