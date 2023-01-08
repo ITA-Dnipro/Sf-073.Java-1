@@ -1,0 +1,6 @@
+# Project exclude paths
+#/src/test/
+/target/
+/.idea/
+/ORMAnager.mv.db
+/ORMAnager.trace.db
