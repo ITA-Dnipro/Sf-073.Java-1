@@ -41,6 +41,7 @@ public class MapperImpl<T> implements Mapper<T> {
         try {
             T obj = cls.getDeclaredConstructor().newInstance();
             for (Field field : cls.getDeclaredFields()) {
+                if (Utils.IsServiceField(field)) continue;
                 field.setAccessible(true);
                 if (AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)) continue;
                 var value = SQLUtils.getValueForFieldFromResultSet(resultSet,field);

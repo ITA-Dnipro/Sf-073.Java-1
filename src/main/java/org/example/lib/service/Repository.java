@@ -66,6 +66,7 @@ public class Repository {
     }
 
     public boolean update(String sql) {
+        if (sql.isEmpty()) return false;
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             log.info(sql);

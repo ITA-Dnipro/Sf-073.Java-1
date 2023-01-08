@@ -64,6 +64,7 @@ public class Utils {
         var currClass = o.getClass();
         Field[] declaredFields = currClass.getDeclaredFields();
         for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
             copyValueOfFieldForObject(o, objFrom, field);
         }
     }
@@ -160,4 +161,7 @@ public class Utils {
         return primaryKey != null;
     }
 
+    public static boolean IsServiceField(Field field) {
+        return field.getName().equals("this$0");
+    }
 }

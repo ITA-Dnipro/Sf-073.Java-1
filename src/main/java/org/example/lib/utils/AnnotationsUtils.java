@@ -56,6 +56,7 @@ public class AnnotationsUtils {
     public static <T> Field getFieldByAnnotation(Class<T> o, Class<? extends Annotation> AnnotationClass) {
         Field[] declaredFields = o.getDeclaredFields();
         for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
             if (AnnotationsUtils.isAnnotationPresent(field,AnnotationClass)) {
                 return field;
             }

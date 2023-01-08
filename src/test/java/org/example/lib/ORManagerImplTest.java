@@ -1,8 +1,10 @@
 package org.example.lib;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import org.example.lib.annotations.Id;
+
+import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
+import org.example.lib.exceptions.RegisterClassException;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
@@ -59,12 +61,58 @@ public class ORManagerImplTest {
         this.propertiesFileName = "db_test.properties";
         // load properties from file
         this.orm = Utils.getORMImplementation(propertiesFileName);
-        ;
     }
 
     @AfterEach
     void deleteDatabase() throws SQLException {
         clearDatabase();
+    }
+
+    @Test
+    void register_Not_All_Classes_With_Reference_And_Get_Exception() {
+        var status = false;
+        try {
+            orm.register(Book.class);
+        } catch (RegisterClassException e) {
+            status = true;
+        }
+        assertTrue(status);
+    }
+
+    @Test
+    void register_Class_With_Incorrect_Reference_And_Get_Exception() {
+        var status = false;
+        @Entity
+        class TestClassWithReference {
+            @Id
+            private int idTable;
+            private String name;
+            @ManyToOne
+            private TestDBWithoutID reference;
+        }
+
+        try {
+            orm.register(TestClassWithReference.class,TestDBWithoutID.class);
+        } catch (RegisterClassException e) {
+            status = true;
+        }
+        assertTrue(status);
+    }
+
+    @Test
+    void register_Class_Without_Entity_And_Get_Exception() {
+        var status = false;
+        class TestClassWithReference {
+            @Id
+            private UUID idTable;
+        }
+
+        try {
+            orm.register(TestClassWithReference.class);
+        } catch (RegisterClassException e) {
+            status = true;
+        }
+        assertTrue(status);
     }
 
     @Test
@@ -213,7 +261,7 @@ public class ORManagerImplTest {
     void testFindById() {
         String title = "My Book";
         Book book = new Book(title, LocalDate.now());
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
         orm.persist(book);
         book.setTitle("New Book");
         orm.merge(book);
@@ -239,7 +287,7 @@ public class ORManagerImplTest {
                 new Book("Book 2", LocalDate.now()),
                 new Book("Book 3", LocalDate.now())
         );
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
 
         orm.persist(books.get(0));
         orm.persist(books.get(1));
@@ -261,7 +309,7 @@ public class ORManagerImplTest {
     @Test
     void given_book_when_persisted_then_book_saved_to_database() {
         var bookOne = new Book("Lotr", LocalDate.of(1961, 1, 1));
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
         orm.persist(bookOne);
 
         assertThat(bookOne.getId()).isGreaterThan(0);
@@ -273,7 +321,7 @@ public class ORManagerImplTest {
     void given_two_books_when_persisted_then_books_saved_to_database() {
         var bookOne = new Book("Book 1", LocalDate.now());
         var bookTwo = new Book("Book 2", LocalDate.now());
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
         orm.persist(bookOne);
         orm.persist(bookTwo);
 
@@ -283,7 +331,7 @@ public class ORManagerImplTest {
     @Test
     void given_the_same_book_twice_when_persisted_then_book_not_saved_custom_exception_thrown() {
         var bookOne = new Book("Book 1", LocalDate.now());
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
         orm.persist(bookOne);
         Exception exception = assertThrows(
                 ObjectAlreadyExistException.class,
@@ -296,7 +344,7 @@ public class ORManagerImplTest {
     @Test
     void given_book_id_when_delete_then_remove_from_database() {
         var bookOne = new Book("Book 1", LocalDate.now());
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
         orm.persist(bookOne);
         boolean res = orm.delete(bookOne);
         assertTrue(res);
@@ -317,7 +365,7 @@ public class ORManagerImplTest {
     void given_multiple_books_when_delete_then_remove_from_database() {
         var bookOne = new Book("Book 1", LocalDate.now());
         var bookTwo = new Book("Book 2", LocalDate.now());
-        orm.register(Book.class,Publisher.class);
+        orm.register(Book.class,Publisher.class,Author.class);
         orm.persist(bookOne);
         orm.persist(bookTwo);
 

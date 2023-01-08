@@ -1,4 +1,5 @@
 import org.example.lib.utils.Utils;
+import org.example.model.Author;
 import org.example.model.Book;
 import org.example.lib.ORManager;
 import org.example.model.Publisher;
@@ -11,7 +12,7 @@ class Main {
         ORManager ormManager = Utils.getORMImplementation(
                 propertiesFilename
         );
-        ormManager.register(Book.class, Publisher.class);
+        ormManager.register(Book.class, Publisher.class, Author.class);
 
         var publisher = new Publisher("MyPub");
         ormManager.persist(publisher);

@@ -1,6 +1,7 @@
 package org.example.lib;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.Entity;
 import org.example.lib.annotations.Id;
 import org.example.lib.annotations.ManyToOne;
@@ -16,6 +17,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @Data
+@Slf4j
 public class SQLQuery {
     private String sqlFields;
     private String sqlDataFields;
@@ -25,7 +27,7 @@ public class SQLQuery {
     private UUID generatedID;
     private Boolean paramsIsSet;
     private String idColumnName;
-
+    private List<Field> arrayFieldsWithFK;
     public SQLQuery(Object o) {
         setParamsByObject(o);
     }
@@ -39,16 +41,21 @@ public class SQLQuery {
         this.sqlTable = AnnotationsUtils.getNameOfTable(currClass);
         Field[] declaredFields = currClass.getDeclaredFields();
         StringJoiner joiner = new StringJoiner(",");
-        var arrayFieldsWithFK = new ArrayList<Field>();
+        arrayFieldsWithFK = new ArrayList<>();
+
+        if (AnnotationsUtils.isAnnotationPresent(currClass,OneToMany.class)) {
+            log.warn("Unsupported annotation OneToMany in class "+currClass.getSimpleName()+"- annotation has not been implemented! Fields will not be processed");
+        }
 
         for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
             String currType;
             if (AnnotationsUtils.isAnnotationPresent(field, Id.class)) {
                 this.idColumnName = AnnotationsUtils.getNameOfColumn(field);
                 currType = SQLUtils.getSQLStringForIdField(field);
             } else if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)) {
                 currType = SQLUtils.getSQLStringForFieldManyToOne(field);
-                arrayFieldsWithFK.add(field);
+                if (!currType.isEmpty()) arrayFieldsWithFK.add(field);
             } else if (AnnotationsUtils.isAnnotationPresent(field,OneToMany.class)) {
                 continue;
             } else {
@@ -57,13 +64,6 @@ public class SQLQuery {
             if (currType.isEmpty()) continue;
             joiner.add(currType);
         }
-
-        for (Field fieldFk:arrayFieldsWithFK) {
-            String currFk = SQLUtils.getSQLStringForForeignKey(fieldFk);
-            if (currFk.isEmpty()) continue;
-            joiner.add(currFk);
-        }
-
         this.sqlFields = joiner.toString();
         this.paramsIsSet = true;
     }
@@ -83,7 +83,12 @@ public class SQLQuery {
         StringJoiner joinerDataFields = new StringJoiner(",");
         this.arrayOfFields = new ArrayList<>(declaredFields.length);
 
+        if (AnnotationsUtils.isAnnotationPresent(currClass,OneToMany.class)) {
+            log.warn("Unsupported annotation OneToMany in object "+o+"- annotation has not been implemented! Fields will not be processed");
+        }
+
         for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
             if (AnnotationsUtils.isAnnotationPresent(field, ManyToOne.class)) {
                 var currRef = Utils.getValueOfFieldForObject(o, field);
                 if (currRef == null) continue;
@@ -116,6 +121,8 @@ public class SQLQuery {
     }
 
     public String getInsertSQLWithParams() {
+        if (sqlFields.isEmpty()) return "";
+
         StringJoiner joinerFields = new StringJoiner(",");
         StringJoiner joinerDataFields = new StringJoiner(",");
         joinerFields.add(sqlFields);
@@ -132,14 +139,28 @@ public class SQLQuery {
     }
 
     public String getUpdateSQLWithIdParam() {
-        
+        if (sqlFields.isEmpty()) return "";
         return "UPDATE " + sqlTable + " SET " + sqlFields.replaceAll(",","=?, ") +"=?"+
                 " where "+idColumnName+" = ?";
     }
 
     public String getCreateTableSQL() {
+        if (sqlFields.isEmpty()) return "";
         return "CREATE TABLE IF NOT EXISTS " + sqlTable +
                 " (" + sqlFields + ")";
+    }
+
+    public String getCreateFKSQL(Field field) {
+        for (Field currFieldFk:arrayFieldsWithFK) {
+            if (!currFieldFk.equals(field)) continue;
+
+            String currFk = SQLUtils.getSQLStringForForeignKey(currFieldFk);
+            if (currFk.isEmpty()) break;
+
+            return "ALTER TABLE  " + sqlTable +
+                    " ADD " + currFk + "";
+        }
+        return "";
     }
 
     public String getCountSQL() {

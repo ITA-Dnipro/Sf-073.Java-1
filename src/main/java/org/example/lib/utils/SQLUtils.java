@@ -1,5 +1,6 @@
 package org.example.lib.utils;
 
+import jdk.jshell.spi.ExecutionControl;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.Entity;
 import org.example.lib.annotations.Enumerated;
@@ -28,8 +29,9 @@ public class SQLUtils {
         String nameOfField = AnnotationsUtils.getNameOfColumn(field);
         String typeOfField = SQLUtils.getTypeOfFieldSQL(field);
 
-        if (typeOfField == null) {
-            return nameOfField; //to do exception
+        if (typeOfField.isEmpty()) {
+            log.error("Cannot get SQL string for field "+field.getName());
+            return "";
         }
 
         return nameOfField +
@@ -37,7 +39,13 @@ public class SQLUtils {
     }
 
     public static String getSQLStringForIdField(Field field) {
-        String typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
+        String typeOfPKEYField;
+        try {
+            typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
+        } catch (ExecutionControl.NotImplementedException e) {
+            log.error(e.getMessage());
+            return "";
+        }
         return AnnotationsUtils.getNameOfColumn(field) + " " + typeOfPKEYField + " PRIMARY KEY";
     }
 
@@ -55,7 +63,8 @@ public class SQLUtils {
     private static String getJDBCType(Class<?> type) {
         int intTypeSQL = getJDBCTypeNumber(type);
         if (intTypeSQL == 0) {
-            return ""; //to do exception
+            log.error("Cannot get type SQL for type "+type.getSimpleName());
+            return "";
         }
         return getNameJdbcTypeById(intTypeSQL);
     }
@@ -67,12 +76,13 @@ public class SQLUtils {
     }
 
     private static String getTypeForEnum(Field field) {
-        Enumerated.EnumType currType = null;
+        Enumerated.EnumType currType;
         try {
             var method = Enumerated.class.getDeclaredMethod("value");
             currType = (Enumerated.EnumType) method.invoke(null);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException se) {
             log.error("An error while get type of field " + field.getName() + ":" + se);
+            return "";
         }
 
         if (AnnotationsUtils.isAnnotationPresent(field, Enumerated.class)) {
@@ -145,7 +155,7 @@ public class SQLUtils {
         return false;
     }
 
-    private static String getTypeOfPrimaryKeyFieldSQL(Field field) {
+    private static String getTypeOfPrimaryKeyFieldSQL(Field field) throws ExecutionControl.NotImplementedException {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
         String typeSQL = getNameJdbcTypeById(intTypeSQL);
@@ -154,7 +164,9 @@ public class SQLUtils {
             var currType = AnnotationsUtils.getIdType(field);
             if (currType == Id.IDType.SERIAL) {
                 typeSQL = typeSQL + " AUTO_INCREMENT";
-            } else typeSQL = getNameJdbcTypeById(Types.VARCHAR); //to do exception incorrect type of ID
+            } else typeSQL = getNameJdbcTypeById(Types.VARCHAR);
+        } else {
+            throw new ExecutionControl.NotImplementedException("For ID type "+type.getSimpleName()+" is not supported");
         }
         return typeSQL;
     }
@@ -260,30 +272,33 @@ public class SQLUtils {
         var type = field.getType();
         var fieldId = AnnotationsUtils.getFieldByAnnotation(type,Id.class);
         if (fieldId == null){
-            //to do exception
+            log.error("Cannot get SQL query with foreign key for field "+field.getName()+": class "+type.getSimpleName()+" has no id field");
             return "";
         }
 
         String nameOfField = AnnotationsUtils.getNameOfColumn(field);
         String typeOfField = SQLUtils.getTypeOfFieldSQL(fieldId);
 
-        if (typeOfField == null) {
-            return nameOfField; // to do exception
+        if (typeOfField.isEmpty()) {
+            log.error("Cannot get type SQL for field "+nameOfField);
+            return "";
         }
 
         return nameOfField +
                 " " + typeOfField;
     }
 
-    public static String getSQLStringForForeignKey(Field field){
+    public static String getSQLStringForForeignKey(Field field) {
         var type = field.getType();
         var fieldId = AnnotationsUtils.getFieldByAnnotation(type,Id.class);
         if (fieldId == null){
-            //to do exception
+            log.error("Cannot get SQL query with foreign key for field "+field.getName()+": class "+type.getSimpleName()+" has no id field");
             return "";
         }
+
         if (!AnnotationsUtils.isAnnotationPresent(type, Entity.class)){
-            //to do exception
+            log.error("Cannot get SQL query with foreign key for class "+type.getSimpleName()+": class has no entity annotation");
+            return "";
         }
 
         String nameOfField = AnnotationsUtils.getNameOfColumn(field);
@@ -291,9 +306,5 @@ public class SQLUtils {
         String nameOfTable = AnnotationsUtils.getNameOfTable(type);
 
         return "FOREIGN KEY ("+nameOfField+") references "+nameOfTable+"("+nameOfFieldId+")";
-    }
-
-    public static String getSQLStringForFieldOneToMany(Field field) {
-        return "";
     }
 }

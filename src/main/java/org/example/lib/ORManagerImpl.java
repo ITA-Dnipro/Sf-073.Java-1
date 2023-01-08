@@ -2,6 +2,7 @@ package org.example.lib;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
+import org.example.lib.exceptions.RegisterClassException;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.service.Mapper;
 import org.example.lib.service.MapperImpl;
@@ -13,7 +14,6 @@ import org.example.lib.utils.Utils;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -33,46 +33,52 @@ public class ORManagerImpl implements ORManager {
     @Override
     public void register(Class... entityClasses) {
         var classesToRegister = new HashSet<Class>();
+        var classesWithFK = new HashSet<Class>();
         for (Class currClass : entityClasses) {
             if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)){
-                //to do exception
-                continue;
+                throw new RegisterClassException("Try to register class "+currClass.getSimpleName()+" without entity!");
+            }
+            var fieldManyToOne = AnnotationsUtils.getFieldByAnnotation(currClass,ManyToOne.class);
+            if (fieldManyToOne != null){
+                classesWithFK.add(currClass);
             }
             classesToRegister.add(currClass);
+            registerClassInDB(currClass);
         }
 
-        var registeredClasses = registerClassWithReferences(classesToRegister);
-
-        for (Class currClass : classesToRegister) {
-            if (registeredClasses.contains(currClass)){
-                continue;
-            }
-            registerClassInDB(currClass);
+        for (Class currClass : classesWithFK) {
+            registerClassWithReferences(currClass,classesToRegister);
         }
     }
 
-    private HashSet<Class> registerClassWithReferences(HashSet<Class> classesToRegister) {
-        var registeredClasses = new HashSet<Class>();
-
-        for (Class currClass : classesToRegister) {
-            var field = AnnotationsUtils.getFieldByAnnotation(currClass,ManyToOne.class);
-            if (field == null){
-                continue;
+    private void registerClassWithReferences(Class currClass,HashSet<Class> registeredClasses) {
+        Field[] declaredFields = currClass.getDeclaredFields();
+        for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
+            if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)) {
+                var typeClass = field.getType();
+                if (!registeredClasses.contains(typeClass)){
+                    throw new RegisterClassException("Try to register class "+currClass.getSimpleName()+" with reference to "+typeClass.getSimpleName()+" but this class was not registered!");
+                }
+                var fieldId = AnnotationsUtils.getFieldByAnnotation(typeClass,Id.class);
+                if (fieldId == null){
+                    throw new RegisterClassException("Try to register reference to class "+typeClass.getSimpleName()+" but this class has no id field!");
+                }
             }
-            var typeClass = field.getType();
-            if (!classesToRegister.contains(typeClass)){
-                //to do exception
-                continue;
-            }
-            var fieldId = AnnotationsUtils.getFieldByAnnotation(typeClass,Id.class);
-            if (fieldId == null){
-                //to do exception
-                continue;
-            }
-            registerClassInDB(typeClass);
-            registeredClasses.add(typeClass);
         }
-        return registeredClasses;
+        registerFKInDB(currClass);
+    }
+
+    private void registerFKInDB(Class currClass) {
+        SQLQuery sql = new SQLQuery(currClass);
+        if (sql.getParamsIsSet()) {
+            var arrayOfFieldsFK =  sql.getArrayFieldsWithFK();
+            for (Field field:arrayOfFieldsFK) {
+                repository.update(sql.getCreateFKSQL(field));
+            }
+        } else {
+            log.error("Error creating sql query for class " + currClass.getSimpleName() + " cannot set parameters by class!");
+        }
     }
 
     private void registerClassInDB(Class currClass) {
