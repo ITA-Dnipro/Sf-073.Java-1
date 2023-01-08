@@ -1,6 +1,5 @@
 package org.example.lib.utils;
 
-import jdk.jshell.spi.ExecutionControl;
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.Entity;
 import org.example.lib.annotations.Enumerated;
@@ -42,7 +41,7 @@ public class SQLUtils {
         String typeOfPKEYField;
         try {
             typeOfPKEYField = getTypeOfPrimaryKeyFieldSQL(field);
-        } catch (ExecutionControl.NotImplementedException e) {
+        } catch (UnsupportedOperationException e) {
             log.error(e.getMessage());
             return "";
         }
@@ -155,7 +154,7 @@ public class SQLUtils {
         return false;
     }
 
-    private static String getTypeOfPrimaryKeyFieldSQL(Field field) throws ExecutionControl.NotImplementedException {
+    private static String getTypeOfPrimaryKeyFieldSQL(Field field) throws UnsupportedOperationException {
         var type = field.getType();
         Integer intTypeSQL = getJDBCTypeNumber(type);
         String typeSQL = getNameJdbcTypeById(intTypeSQL);
@@ -166,7 +165,7 @@ public class SQLUtils {
                 typeSQL = typeSQL + " AUTO_INCREMENT";
             } else typeSQL = getNameJdbcTypeById(Types.VARCHAR);
         } else {
-            throw new ExecutionControl.NotImplementedException("For ID type "+type.getSimpleName()+" is not supported");
+            throw new UnsupportedOperationException("For ID type "+type.getSimpleName()+" is not supported");
         }
         return typeSQL;
     }
