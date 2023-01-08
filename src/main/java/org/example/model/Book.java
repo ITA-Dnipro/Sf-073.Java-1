@@ -17,6 +17,9 @@ public class Book {
     @ManyToOne(columnName = "publisher_id")
     private Publisher publisher = null;
 
+    @ManyToOne(columnName = "author_id")
+    private Author author = null;
+
     public Book() {
     }
 

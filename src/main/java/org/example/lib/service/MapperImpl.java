@@ -2,6 +2,7 @@ package org.example.lib.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.Id;
+import org.example.lib.annotations.OneToMany;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
@@ -40,7 +41,9 @@ public class MapperImpl<T> implements Mapper<T> {
         try {
             T obj = cls.getDeclaredConstructor().newInstance();
             for (Field field : cls.getDeclaredFields()) {
+                if (Utils.IsServiceField(field)) continue;
                 field.setAccessible(true);
+                if (AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)) continue;
                 var value = SQLUtils.getValueForFieldFromResultSet(resultSet,field);
                 Utils.setValueOfFieldForObject(obj,field,value);
             }

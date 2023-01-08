@@ -1,9 +1,6 @@
 package org.example.lib.utils;
 
-import org.example.lib.annotations.Column;
-import org.example.lib.annotations.Enumerated;
-import org.example.lib.annotations.Id;
-import org.example.lib.annotations.Table;
+import org.example.lib.annotations.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -25,6 +22,10 @@ public class AnnotationsUtils {
         if (isAnnotationPresent(field, Column.class)) {
             var annFieldType = field.getAnnotation(Column.class);
             return annFieldType.value().isEmpty() ? nameOfColumn : annFieldType.value();
+        }
+        if (isAnnotationPresent(field, ManyToOne.class)) {
+            var annFieldType = field.getAnnotation(ManyToOne.class);
+            return annFieldType.columnName().isEmpty() ? nameOfColumn : annFieldType.columnName();
         }
         return  nameOfColumn;
     }
@@ -55,6 +56,7 @@ public class AnnotationsUtils {
     public static <T> Field getFieldByAnnotation(Class<T> o, Class<? extends Annotation> AnnotationClass) {
         Field[] declaredFields = o.getDeclaredFields();
         for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
             if (AnnotationsUtils.isAnnotationPresent(field,AnnotationClass)) {
                 return field;
             }

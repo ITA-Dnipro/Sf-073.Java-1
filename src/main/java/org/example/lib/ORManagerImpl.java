@@ -2,6 +2,7 @@ package org.example.lib;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
+import org.example.lib.exceptions.RegisterClassException;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.service.Mapper;
 import org.example.lib.service.MapperImpl;
@@ -31,13 +32,61 @@ public class ORManagerImpl implements ORManager {
 
     @Override
     public void register(Class... entityClasses) {
+        var classesToRegister = new HashSet<Class>();
+        var classesWithFK = new HashSet<Class>();
         for (Class currClass : entityClasses) {
-            SQLQuery sql = new SQLQuery(currClass);
-            if (sql.getParamsIsSet()) {
-                repository.update(sql.getCreateTableSQL());
-            } else {
-                log.error("Error creating sql query for class " + currClass.getSimpleName() + " cannot set parameters by class!");
+            if (!AnnotationsUtils.isAnnotationPresent(currClass, Entity.class)){
+                throw new RegisterClassException("Try to register class "+currClass.getSimpleName()+" without entity!");
             }
+            var fieldManyToOne = AnnotationsUtils.getFieldByAnnotation(currClass,ManyToOne.class);
+            if (fieldManyToOne != null){
+                classesWithFK.add(currClass);
+            }
+            classesToRegister.add(currClass);
+            registerClassInDB(currClass);
+        }
+
+        for (Class currClass : classesWithFK) {
+            registerClassWithReferences(currClass,classesToRegister);
+        }
+    }
+
+    private void registerClassWithReferences(Class currClass,HashSet<Class> registeredClasses) {
+        Field[] declaredFields = currClass.getDeclaredFields();
+        for (Field field : declaredFields) {
+            if (Utils.IsServiceField(field)) continue;
+            if (AnnotationsUtils.isAnnotationPresent(field,ManyToOne.class)) {
+                var typeClass = field.getType();
+                if (!registeredClasses.contains(typeClass)){
+                    throw new RegisterClassException("Try to register class "+currClass.getSimpleName()+" with reference to "+typeClass.getSimpleName()+" but this class was not registered!");
+                }
+                var fieldId = AnnotationsUtils.getFieldByAnnotation(typeClass,Id.class);
+                if (fieldId == null){
+                    throw new RegisterClassException("Try to register reference to class "+typeClass.getSimpleName()+" but this class has no id field!");
+                }
+            }
+        }
+        registerFKInDB(currClass);
+    }
+
+    private void registerFKInDB(Class currClass) {
+        SQLQuery sql = new SQLQuery(currClass);
+        if (sql.getParamsIsSet()) {
+            var arrayOfFieldsFK =  sql.getArrayFieldsWithFK();
+            for (Field field:arrayOfFieldsFK) {
+                repository.update(sql.getCreateFKSQL(field));
+            }
+        } else {
+            log.error("Error creating sql query for class " + currClass.getSimpleName() + " cannot set parameters by class!");
+        }
+    }
+
+    private void registerClassInDB(Class currClass) {
+        SQLQuery sql = new SQLQuery(currClass);
+        if (sql.getParamsIsSet()) {
+            repository.update(sql.getCreateTableSQL());
+        } else {
+            log.error("Error creating sql query for class " + currClass.getSimpleName() + " cannot set parameters by class!");
         }
     }
 
@@ -98,6 +147,7 @@ public class ORManagerImpl implements ORManager {
     private <T> boolean insertObjectWithAutoIncrementToDatabase(SQLQuery sqlQuery, T o) {
         Field idField = AnnotationsUtils.getFieldByAnnotation(o, Id.class);
         if (idField == null) return false;
+
         var arrayOfFields = sqlQuery.getArrayOfFields();
         Mapper<T> mapper = new MapperImpl(o.getClass());
         var objectWithId = repository.updateAndGetObjectWithID(sqlQuery.getInsertSQLWithParams(), arrayOfFields, mapper);
@@ -106,6 +156,7 @@ public class ORManagerImpl implements ORManager {
         }
         Utils.copyValueOfFieldForObject(o, objectWithId, idField);
         return true;
+
     }
 
     @Override
