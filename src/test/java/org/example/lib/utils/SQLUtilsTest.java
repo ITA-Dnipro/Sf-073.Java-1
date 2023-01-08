@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,13 +23,16 @@ class SQLUtilsTest {
     Field plainBoolean;
     Field annotatedLong;
     Field uuidLong;
+    Field titleLong;
     TestClassSqlUtils nullTest;
     TestClassSqlUtils test;
+    Connection connection;
+    Class<?> clss;
 
 
     @BeforeEach
     void setUp() throws Exception {
-        Class<?> clss = Class.forName("org.example.lib.utils.TestClassSqlUtils");
+        clss = Class.forName("org.example.lib.utils.TestClassSqlUtils");
         nullTest = new TestClassSqlUtils();
         test = new TestClassSqlUtils(1L);
         plainLong = clss.getDeclaredField("tableLong");
@@ -40,7 +41,10 @@ class SQLUtilsTest {
         plainBoolean = clss.getDeclaredField("tableBoolean");
         annotatedLong = clss.getDeclaredField("table");
         uuidLong = clss.getDeclaredField("tableUUID");
+        titleLong = clss.getDeclaredField("title");
         plainLong.setAccessible(true);
+        connection = DriverManager.getConnection("jdbc:h2:./ORMTest", "sa", "password");
+        connection.setAutoCommit(false);
     }
 
     @Test
@@ -157,7 +161,7 @@ class SQLUtilsTest {
         var uuid = UUID.randomUUID();
 
         var res = SQLUtils.getValueFromJavaToSQLType(uuid, UUID.class);
-        String uuidStr = uuid.toString().replace("-","");
+        String uuidStr = uuid.toString().replace("-", "");
 
         assertThat(res).isEqualTo(uuidStr);
     }
