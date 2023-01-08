@@ -1,4 +1,4 @@
-package org.example.lib.utils;
+package org.example.lib;
 
 import org.example.lib.annotations.Id;
 

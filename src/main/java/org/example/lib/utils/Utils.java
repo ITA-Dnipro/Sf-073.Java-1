@@ -41,13 +41,13 @@ public class Utils {
                     .getResourceAsStream(filename);
             prop.load(input);
         } catch (IOException e) {
-            var message = "Error reading file "+filename+": "+e;
+            var message = "Error reading file " + filename + ": " + e;
             log.error(message);
             throw new IncorrectPropertiesFileException(message);
         }
 
-        if (prop.isEmpty()){
-            var message = "Error reading file "+filename+": property is empty!";
+        if (prop.isEmpty()) {
+            var message = "Error reading file " + filename + ": property is empty!";
             log.error(message);
             throw new IncorrectPropertiesFileException(message);
         }
@@ -83,18 +83,18 @@ public class Utils {
     public static void setValueOfFieldForObject(Object o, Field field, Object value) {
         field.setAccessible(true);
         var type = field.getType();
-            if (AnnotationsUtils.isAnnotationPresent(field, ManyToOne.class)){
-                var currRef = orm.findById((Serializable) value,type) ;
-                if (currRef.isPresent()){
-                    value = currRef.get();
-                } else{
-                    log.error("An error while setting value for " + field.getName() + " can not find reference for "+type);
-                }
+        if (value!=null && AnnotationsUtils.isAnnotationPresent(field, ManyToOne.class)) {
+            var currRef = orm.findById((Serializable) value, type);
+            if (currRef.isPresent()) {
+                value = currRef.get();
+            } else {
+                log.error("An error while setting value for " + field.getName() + " can not find reference for " + type);
             }
-            if (AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)){
-              return; //to do
-            }
-       setValueOfFieldForObjectByType(o,field,type,value);
+        }
+        if (value!=null && AnnotationsUtils.isAnnotationPresent(field, OneToMany.class)) {
+            return; //to do
+        }
+        setValueOfFieldForObjectByType(o, field, type, value);
     }
 
     private static void setValueOfFieldForObjectByType(Object o, Field field, Class<?> type, Object value) {

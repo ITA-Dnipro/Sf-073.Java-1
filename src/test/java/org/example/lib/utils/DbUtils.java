@@ -10,6 +10,7 @@ import java.util.Set;
 
 public class DbUtils {
     public static void clearDatabase(String propertiesFileName) throws SQLException {
+
         DataSource datasource = Utils.getDataSourceFromFilename(propertiesFileName);
 
         Connection c = datasource.getConnection();
@@ -19,7 +20,7 @@ public class DbUtils {
         s.execute("SET REFERENTIAL_INTEGRITY FALSE");
 
         // Find all tables and truncate them
-        Set<String> tables = new HashSet<>();
+        Set<String> tables = new HashSet<String>();
         ResultSet rs = s.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES  where TABLE_SCHEMA='PUBLIC'");
         while (rs.next()) {
             tables.add(rs.getString(1));
@@ -27,17 +28,6 @@ public class DbUtils {
         rs.close();
         for (String table : tables) {
             s.executeUpdate("TRUNCATE TABLE " + table);
-        }
-
-        // Idem for sequences
-        Set<String> sequences = new HashSet<>();
-        rs = s.executeQuery("SELECT SEQUENCE_NAME FROM INFORMATION_SCHEMA.SEQUENCES WHERE SEQUENCE_SCHEMA='PUBLIC'");
-        while (rs.next()) {
-            sequences.add(rs.getString(1));
-        }
-        rs.close();
-        for (String seq : sequences) {
-            s.executeUpdate("ALTER SEQUENCE " + seq + " RESTART WITH 1");
         }
 
         // Enable FK

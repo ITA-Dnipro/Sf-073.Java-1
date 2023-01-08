@@ -1,6 +1,7 @@
-package org.example.lib.utils;
+package org.example.lib;
 
 
+import org.example.lib.utils.SQLUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +33,7 @@ class SQLUtilsTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        clss = Class.forName("org.example.lib.utils.TestClassSqlUtils");
+        clss = Class.forName("org.example.lib.TestClassSqlUtils");
         nullTest = new TestClassSqlUtils();
         test = new TestClassSqlUtils(1L);
         plainLong = clss.getDeclaredField("tableLong");

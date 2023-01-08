@@ -6,6 +6,7 @@ import org.example.lib.annotations.*;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
 import org.example.lib.exceptions.RegisterClassException;
 import org.example.lib.utils.AnnotationsUtils;
+import org.example.lib.utils.DbUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
 import org.example.model.*;
@@ -29,33 +30,6 @@ public class ORManagerImplTest {
     private ORManager orm;
     private String propertiesFileName;
 
-    private void clearDatabase() throws SQLException {
-
-        DataSource datasource = Utils.getDataSourceFromFilename(propertiesFileName);
-
-        Connection c = datasource.getConnection();
-        Statement s = c.createStatement();
-
-        // Disable FK
-        s.execute("SET REFERENTIAL_INTEGRITY FALSE");
-
-        // Find all tables and truncate them
-        Set<String> tables = new HashSet<String>();
-        ResultSet rs = s.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES  where TABLE_SCHEMA='PUBLIC'");
-        while (rs.next()) {
-            tables.add(rs.getString(1));
-        }
-        rs.close();
-        for (String table : tables) {
-            s.executeUpdate("TRUNCATE TABLE " + table);
-        }
-
-        // Enable FK
-        s.execute("SET REFERENTIAL_INTEGRITY TRUE");
-        s.close();
-        c.close();
-    }
-
     @BeforeEach
     void setUp() {
         this.propertiesFileName = "db_test.properties";
@@ -65,7 +39,7 @@ public class ORManagerImplTest {
 
     @AfterEach
     void deleteDatabase() throws SQLException {
-        clearDatabase();
+        DbUtils.clearDatabase(propertiesFileName);
     }
 
     @Test

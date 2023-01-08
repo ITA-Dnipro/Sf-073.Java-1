@@ -1,6 +1,7 @@
-package org.example.lib.utils;
+package org.example.lib;
 
-import org.example.lib.ORManager;
+import org.example.lib.utils.DbUtils;
+import org.example.lib.utils.Utils;
 import org.example.model.TestDBWithID;
 import org.example.model.TestDBWithoutID;
 import org.junit.jupiter.api.AfterEach;
@@ -36,7 +37,7 @@ class UtilsTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        clss = Class.forName("org.example.lib.utils.TestClassUtils");
+        clss = Class.forName("org.example.lib.TestClassUtils");
         tableLong = clss.getDeclaredField("tableLong");
         tableString = clss.getDeclaredField("tableString");
         tableInt = clss.getDeclaredField("tableInt");
@@ -51,7 +52,7 @@ class UtilsTest {
 
         this.propertiesFileName = "db_test.properties";
         // load properties from file
-        this.orm = ORManager.withPropertiesFrom(propertiesFileName);
+        this.orm = Utils.getORMImplementation(propertiesFileName);
     }
 
     @AfterEach

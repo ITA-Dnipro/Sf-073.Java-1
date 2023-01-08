@@ -164,7 +164,7 @@ public class SQLUtils {
             if (currType == Id.IDType.SERIAL) {
                 typeSQL = typeSQL + " AUTO_INCREMENT";
             } else typeSQL = getNameJdbcTypeById(Types.VARCHAR);
-        } else {
+        } else if (type != UUID.class) {
             throw new UnsupportedOperationException("For ID type "+type.getSimpleName()+" is not supported");
         }
         return typeSQL;
