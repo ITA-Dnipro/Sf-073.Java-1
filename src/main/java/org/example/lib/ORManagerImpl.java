@@ -4,9 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lib.annotations.*;
 import org.example.lib.exceptions.RegisterClassException;
 import org.example.lib.exceptions.ObjectAlreadyExistException;
+import org.example.lib.service.DatabaseService;
 import org.example.lib.service.Mapper;
 import org.example.lib.service.MapperImpl;
-import org.example.lib.service.Repository;
 import org.example.lib.utils.AnnotationsUtils;
 import org.example.lib.utils.SQLUtils;
 import org.example.lib.utils.Utils;
@@ -19,10 +19,10 @@ import java.util.stream.Stream;
 
 @Slf4j
 public class ORManagerImpl implements ORManager {
-    private final Repository repository;
+    private final DatabaseService repository;
 
     public ORManagerImpl(DataSource dataSource) {
-        this.repository = new Repository(dataSource);
+        this.repository = new DatabaseService(dataSource);
     }
 
     @Override
@@ -106,16 +106,15 @@ public class ORManagerImpl implements ORManager {
             log.error("Error reading params for sql from object " + o);
             return;
         }
-        var objectHasAutoIncrementID = SQLUtils.objectHasAutoIncrementID(o);
 
-        if (Utils.checkIfObjectInDB(o)
-                && objectHasAutoIncrementID) {
+        if (Utils.checkIfObjectInDB(o)) {
             var message = "Try to persist an existing object. Object " + o + " already exist in database!";
             log.error(message);
             throw new ObjectAlreadyExistException(message);
         }
 
         var status = false;
+        var objectHasAutoIncrementID = SQLUtils.objectHasAutoIncrementID(o);
 
         if (objectHasAutoIncrementID) {
             status = insertObjectWithAutoIncrementToDatabase(sqlQuery, o);
@@ -268,10 +267,14 @@ public class ORManagerImpl implements ORManager {
             return false;
         }
 
+        var arrayOfFieldsFK =  sqlQuery.getArrayFieldsWithFK();
+        for (Field field:arrayOfFieldsFK) {
+            repository.update(sqlQuery.getDeleteFKSQL(field));
+        }
+
         String sql = sqlQuery.getDeleteSQLWithParams();
         ArrayList<Object> params = new ArrayList<>();
         params.add(currValue);
-
         var status = repository.update(sql, params);
 
         if (status && sqlQuery.getObjectHasAutoIncrementID()) {

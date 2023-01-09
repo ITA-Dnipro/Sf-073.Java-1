@@ -182,7 +182,7 @@ public class SQLUtils {
         if (type == BigDecimal.class) {
             return currData.toString();
         } else if (type == UUID.class) {
-            return convertUUIDToString((UUID) currData);
+            return convertUUIDToString((UUID) currData); // to do - use BINARY not string
         } else if (type == LocalDate.class) {
             return Date.valueOf((LocalDate) currData);
         } else if (type == Instant.class) {
