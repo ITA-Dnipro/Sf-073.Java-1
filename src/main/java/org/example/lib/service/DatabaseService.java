@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public class Repository {
+public class DatabaseService {
     private final DataSource dataSource;
 
-    public Repository(DataSource dataSource) {
+    public DatabaseService(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -49,6 +49,7 @@ public class Repository {
             setParametersForPrepareStatement(pstmt, params);
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
+                //to do - remove SQLException throw in this case - use logger and return
                 throw new SQLException("Updating object failed, no rows affected.");
             }
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {

@@ -28,6 +28,7 @@ public class SQLQuery {
     private Boolean paramsIsSet;
     private String idColumnName;
     private List<Field> arrayFieldsWithFK;
+
     public SQLQuery(Object o) {
         setParamsByObject(o);
     }
@@ -41,7 +42,7 @@ public class SQLQuery {
         this.sqlTable = AnnotationsUtils.getNameOfTable(currClass);
         Field[] declaredFields = currClass.getDeclaredFields();
         StringJoiner joiner = new StringJoiner(",");
-        arrayFieldsWithFK = new ArrayList<>();
+        this.arrayFieldsWithFK = new ArrayList<>(declaredFields.length);
 
         if (AnnotationsUtils.isAnnotationPresent(currClass,OneToMany.class)) {
             log.warn("Unsupported annotation OneToMany in class "+currClass.getSimpleName()+"- annotation has not been implemented! Fields will not be processed");
@@ -82,6 +83,7 @@ public class SQLQuery {
         StringJoiner joinerFields = new StringJoiner(",");
         StringJoiner joinerDataFields = new StringJoiner(",");
         this.arrayOfFields = new ArrayList<>(declaredFields.length);
+        this.arrayFieldsWithFK = new ArrayList<>(declaredFields.length);
 
         if (AnnotationsUtils.isAnnotationPresent(currClass,OneToMany.class)) {
             log.warn("Unsupported annotation OneToMany in object "+o+"- annotation has not been implemented! Fields will not be processed");
@@ -96,6 +98,7 @@ public class SQLQuery {
                 var fieldId = AnnotationsUtils.getFieldByAnnotation(currRef,Id.class);
                 arrayOfFields.add(SQLUtils.getValueFieldFromObjectToSQLType(currRef, fieldId));
                 joinerDataFields.add("?");
+                arrayFieldsWithFK.add(field);
                 continue;
             }
 
@@ -159,6 +162,19 @@ public class SQLQuery {
 
             return "ALTER TABLE  " + sqlTable +
                     " ADD " + currFk + "";
+        }
+        return "";
+    }
+
+    public String getDeleteFKSQL(Field field) {
+        for (Field currFieldFk:arrayFieldsWithFK) {
+            if (!currFieldFk.equals(field)) continue;
+
+            String currFk = AnnotationsUtils.getNameOfColumn(field);
+            if (currFk.isEmpty()) break;
+
+            return "ALTER TABLE  " + sqlTable +
+                    " DROP CONSTRAINT " + currFk + "";
         }
         return "";
     }

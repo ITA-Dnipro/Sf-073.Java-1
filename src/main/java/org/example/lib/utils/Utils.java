@@ -30,7 +30,8 @@ public class Utils {
 
     public static ORManager getORMImplementation(DataSource dataSource) {
         orm = new ORManagerImpl(dataSource);
-        return orm;
+        return orm;  //to do - using such field may reduce null pointer exception because it using in another public method
+        //also calling this method twice may creating new object (singleton) ?
     }
 
     public static JdbcDataSource getDataSourceFromFilename(String filename) throws IncorrectPropertiesFileException {
